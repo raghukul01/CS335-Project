@@ -434,7 +434,11 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        if flag[3] == 1:
+            code.append('mov esi, [esi]')
         code.append('xor eax, eax')
         code.append('cmp edi, esi')
         if instr[0] == '==int':
@@ -449,8 +453,12 @@ class CodeGenerator:
             code.append('setle al')
         elif instr[0] == '>=int':
             code.append('setge al')
-        code.append('mov [ebp' + str(dstOffset) + '], eax')
-
+        
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], eax')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], eax')
         return code
 
     def print_int(self, instr, scopeInfo, funcScope):
@@ -509,9 +517,12 @@ class CodeGenerator:
         var = instr[1]
         jLabel = instr[5]
         code = []
+        flag = self.setFlags(instr, scopeInfo)
 
         varOffset = self.ebpOffset(var, scopeInfo[1], funcScope)
         code.append('mov edi, [ebp' + varOffset + ']')
+        if flag[1] == 1:
+            code.append('mov edi, [edi]')
         code.append('cmp edi, 0')
         code.append('je ' + jLabel)
 
@@ -528,6 +539,7 @@ class CodeGenerator:
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
@@ -535,12 +547,22 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        if flag[3] == 1:
+            code.append('mov esi, [esi]')
+
         if instr[0] == '||':
             code.append('or edi, esi')
         elif instr[0] == '&&':
             code.append('and edi, esi')
-        code.append('mov [ebp' + str(dstOffset) + '], edi')
+        
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
 
     def getRetVal(self, instr, scopeInfo, funcScope):
@@ -566,14 +588,21 @@ class CodeGenerator:
     def inc_dec(self, instr, scopeInfo, funcScope):
         dst = instr[1]
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
-        
+        flag = self.setFlags(instr, scopeInfo)
         code = []
         code.append('mov esi, [ebp' + dstOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         if instr[0] == '++':
             code.append('inc esi')
         else:
             code.append('dec esi')
-        code.append('mov [ebp' + dstOffset + '], esi')
+
+        if flag[1] == 1:
+            code.append('mov edi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [edi], esi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], esi')
         return code
         
     def genCode(self, idx, funcScope):
