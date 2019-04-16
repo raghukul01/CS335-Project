@@ -726,7 +726,7 @@ def p_prim_expr(p):
                 p[0].typeList = [identType]
                 helper.symbolTables[helper.getScope()].update(newVar1, 'reference', True)
         else:
-            
+
             compilation_errors.add('TypeMismatch', line_number.get()+1, 'Before period we must have struct')
 
     elif p[2].name == 'Index':
@@ -834,7 +834,7 @@ def p_expr(p):
         else:
             if len(p[2].typeList) > 0:
                 # for boolean
-                p[0].typeList = p[2].typeList 
+                p[0].typeList = p[2].typeList
             else:
                 p[0].typeList = p[1].typeList
             newVar = helper.newVar(p[0].typeList[0])
@@ -950,7 +950,7 @@ def p_rel_op(p):
     else:
         p[0].extra['int'] = True
         p[0].extra['float'] = True
-        p[0].extra['string'] = True
+        # p[0].extra['string'] = True
 
 
 def p_add_mul_op(p):
@@ -979,7 +979,8 @@ def p_unary_op(p):
     p[0] = Node('UnaryOp')
     p[0].extra['int'] = True
     p[0].extra['float'] = True
-    p[0].extra['string'] = True
+    if p[1] == '+':
+        p[0].extra['string'] = True
     p[0].extra['opcode'] = p[1]
 
 # -------------------------------------------------------
