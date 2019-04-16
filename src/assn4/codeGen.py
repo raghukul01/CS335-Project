@@ -335,13 +335,19 @@ class CodeGenerator:
     def assign_op_ptr(self, instr, scopeInfo, funcScope):
         dst = instr[1][1:]
         src = instr[2]
+        # *t1 += t2
         code = []
+        instr[1] = dst
         flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
         code.append('mov edi, [ebp' + srcOffset + ']')
         code.append('mov esi, [ebp' + dstOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         if instr[0] == '+=':
             code.append('add [esi], edi')
         elif instr[0] == '-=':
@@ -373,9 +379,15 @@ class CodeGenerator:
             if var1 >= 0:
                 var1 = '+' + str(var1)
             code.append('mov esi, [ebp' + srcOffset + ']')
+            if flag[2] == 1:
+                code.append('mov esi, [esi]')
             code.append('sub esi,' + str(ctr2))
             code.append('mov edi, [esi]')
-            code.append('mov [ebp' + str(var1) +'], edi')
+            if flag[1] == 1:
+                code.append('mov esi, [ebp' + str(var1) +']')
+                code.append('mov [esi], edi')
+            else:
+                code.append('mov [ebp' + str(var1) +'], edi')
             ctr1 += 4
             ctr2 += 4
         return code
