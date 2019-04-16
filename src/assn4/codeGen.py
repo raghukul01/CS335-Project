@@ -109,20 +109,20 @@ class CodeGenerator:
 
         baseType = helper.getBaseType(info_src1['type'])
         if baseType[0] == 'struct':
-            objOffset = abs(int(self.ebpOffset(src1, scopeInfo[2], funcScope)))
-            self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = objOffset + int(src2)
+            objOffset = int(self.ebpOffset(src1, scopeInfo[2], funcScope))
+            self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = -(objOffset + int(src2))
             self.helper.symbolTables[scopeInfo[1]].table[dst]['parent'] = src1
             # self.helper.symbolTables[scopeInfo[1]].table[dst]['parentScope'] = scopeInfo[2]
             return ['none']
         elif baseType[0] == 'array':
-            objOffset = abs(int(self.ebpOffset(src1, scopeInfo[2], funcScope)))
+            objOffset = self.ebpOffset(src1, scopeInfo[2], funcScope)
             dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
             src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
             return ['mov edx, '+str(objOffset),
                     'mov esi, [ebp'+str(src2Offset)+']',
                     'add edx, esi',
-                    'mov esi, ebp'
-                    'sub esi, edx'
+                    'mov esi, ebp',
+                    'add esi, edx',
                     'mov [ebp' + str(dstOffset) + '], esi', 
                 ]
 
