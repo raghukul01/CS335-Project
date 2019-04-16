@@ -95,9 +95,15 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         code.append('mov esi, 0')
         code.append('sub esi, edi')
-        code.append('mov [ebp' + str(dstOffset) + '], esi')
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], esi')
         return code
 
     def setFlags(self, instr, scopeInfo):
@@ -178,12 +184,22 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
+
         if isinstance(scopeInfo[3], int):
             code.append('mov esi, [ebp' + str(src2Offset) + ']')
+            if flag[3] == 1:
+                code.append('mov esi, [esi]')
         else:
             code.append('mov esi, ' + str(src2))
         code.append('sub edi, esi')
-        code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
     
     def mul_op(self, instr, scopeInfo, funcScope):
@@ -199,12 +215,22 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
+
         if isinstance(scopeInfo[3], int):
             code.append('mov esi, [ebp' + str(src2Offset) + ']')
+            if flag[3] == 1:
+                code.append('mov esi, [esi]')
         else:
             code.append('mov esi, ' + str(src2))
         code.append('imul edi, esi')
-        code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
 
     def div_op(self, instr, scopeInfo, funcScope):
@@ -226,7 +252,12 @@ class CodeGenerator:
         else:
             code.append('mov ebx, ' + str(src2))
         code.append('idiv ebx')
-        code.append('mov [ebp' + str(dstOffset) + '], eax')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], eax')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], eax')
         return code
     
     def pointer_assign(self, instr, scopeInfo, funcScope):
@@ -277,11 +308,21 @@ class CodeGenerator:
             dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
             srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
             code.append('mov edi, [ebp' + srcOffset + ']')
-            code.append('mov [ebp' + dstOffset + '], edi')
+            if flag[2] == 1:
+                code.append('mov edi, [edi]')
+            if flag[1] == 1:
+                code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+                code.append('mov [esi], edi')
+            else:
+                code.append('mov [ebp' + str(dstOffset) + '], edi')
         else:
             dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
             code.append('mov edi, ' + str(src))
-            code.append('mov [ebp' + dstOffset + '], edi')
+            if flag[1] == 1:
+                code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+                code.append('mov [esi], edi')
+            else:
+                code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
 
     def assign_op_ptr(self, instr, scopeInfo, funcScope):
