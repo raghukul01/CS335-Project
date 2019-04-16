@@ -425,13 +425,22 @@ class CodeGenerator:
         dst = instr[1]
         src = instr[2]
         flag = self.setFlags(instr, scopeInfo)
+        print(flag, instr)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
         code = []
 
-        code.append('lea edi, [ebp'+ srcOffset +']')
-        code.append('mov [ebp'+dstOffset+'], edi')
+        if flag[2] == 1:
+            code.append('mov edi, [ebp'+ srcOffset +']')
+        else:
+            code.append('lea edi, [ebp'+ srcOffset +']')
+        
+        if flag[2] == 1:
+            code.append('mov esi, [ebp' + dstOffset + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp'+dstOffset+'], edi')
         return code
 
     def relops_cmp(self, instr, scopeInfo, funcScope):
