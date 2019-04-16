@@ -35,7 +35,6 @@ class CodeGenerator:
                 offset = -(self.helper.symbolTables[identScope].table[ident]['offset']  - paramSize)
             else:
                 offset = -(self.helper.symbolTables[identScope].table[ident]['offset'] + self.helper.symbolTables[identScope].table[ident]['size'] - paramSize)
-            print(ident, offset)
         if offset >= 0:
             return '+'+str(offset)
         return str(offset)
@@ -525,7 +524,6 @@ class CodeGenerator:
         
     def genCode(self, idx, funcScope):
         # Check instruction type and call function accordingly
-        print(self.code[idx])
         instr = self.code[idx]
         scopeInfo = self.scopeInfo[idx]
 
