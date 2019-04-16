@@ -698,11 +698,8 @@ class CodeGenerator:
     def inc_dec(self, instr, scopeInfo, funcScope):
         dst = instr[1]
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
-<<<<<<< HEAD
-
-=======
         flag = self.setFlags(instr, scopeInfo)
->>>>>>> cbbdeda57587259f049e2af9a876fa30136de250
+        
         code = []
         code.append('mov esi, [ebp' + dstOffset + ']')
         if flag[1] == 1:
