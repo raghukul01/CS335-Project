@@ -386,6 +386,7 @@ def p_expr_list(p):
     p[0].placeList += p[2].placeList
     p[0].typeList += p[2].typeList
     p[0].code += p[2].code
+    p[0].extra['deref'] += p[2].extra['deref']
     p[0].scopeInfo += p[2].scopeInfo
 
 def p_expr_rep(p):
@@ -399,6 +400,9 @@ def p_expr_rep(p):
         p[0].scopeInfo += p[3].scopeInfo
         p[0].placeList += p[3].placeList
         p[0].typeList += p[3].typeList
+        p[0].extra['deref'] += p[3].extra['deref']
+    else:
+        p[0].extra['deref'] = []
 
 # -------------------------------------------------------
 
@@ -813,8 +817,10 @@ def p_expr(p):
         p[0].placeList = p[1].placeList
         p[0].code = p[1].code
         p[0].scopeInfo = p[1].scopeInfo
+        p[0].extra['deref'] = p[1].extra['deref']
         p[0].extra['scope'] = helper.getScope()
     else:
+        p[0].extra['deref'] = ['no']
         tp = helper.getBaseType(p[1].typeList[0])
         if not helper.compareType(p[1].typeList[0], p[3].typeList[0]):
             compilation_errors.add('TypeMismatch', line_number.get()+1, 'Type should be same across binary operator')
@@ -845,6 +851,7 @@ def p_unary_expr(p):
                              | UnaryOp UnaryExpr
                              | NOT UnaryExpr'''
     p[0] = Node('UnaryExpr')
+    p[0].extra['deref'] = ['no']
     if len(p) == 2:
         p[0].typeList = p[1].typeList
         p[0].placeList = p[1].placeList
@@ -892,6 +899,9 @@ def p_unary_expr(p):
         else:
             if updateNeeded:
                 p[0].typeList = p[2].typeList
+                p[0].extra = ['no']
+            else:
+                p[0].extra['deref'] = [p[1].extra['opcode'] + p[2].placeList[0]]
             newVar = helper.newVar(p[0].typeList[0])
             p[0].placeList = [newVar]
             p[0].identList = [newVar]
@@ -1059,7 +1069,10 @@ def p_assignment(p):
     p[0].code += p[3].code
     p[0].scopeInfo += p[3].scopeInfo
     for idx_ in range(len(p[3].typeList)):
-        p[0].code.append([p[2].extra['opcode'], p[1].placeList[idx_], p[3].placeList[idx_]])
+        if p[1].extra['deref'][idx_] == 'no':
+            p[0].code.append([p[2].extra['opcode'], p[1].placeList[idx_], p[3].placeList[idx_]])
+        else:
+            p[0].code.append([p[2].extra['opcode'], p[1].extra['deref'][idx_], p[3].placeList[idx_]])
         p[0].scopeInfo.append(['', helper.findScope(p[1].placeList[idx_]), helper.findScope(p[3].placeList[idx_])])
 
 def p_assign_op(p):
