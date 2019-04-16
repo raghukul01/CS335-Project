@@ -285,7 +285,7 @@ class CodeGenerator:
         code = []
 
         code.append('lea edi, [ebp'+ srcOffset +']')
-        code.append('mov [ebp'+srcOffset+'], edi')
+        code.append('mov [ebp'+dstOffset+'], edi')
         return code
 
     def relops_cmp(self, instr, scopeInfo, funcScope):
@@ -495,7 +495,7 @@ class CodeGenerator:
         elif instr[0] == 'call':
             # function call
             return ['call '+instr[1]]
-            
+
         if instr[0] == '*pointer':
             return self.assign_ptr_rhs(instr, scopeInfo, funcScope)
         if instr[0] == '&int':
