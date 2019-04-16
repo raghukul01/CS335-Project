@@ -717,7 +717,7 @@ def p_prim_expr(p):
 
             else:
                 identType = helper.addUnNamedType(baseType[1][ident]['type'])
-                newVar1 = helper.newVar(int)
+                newVar1 = helper.newVar('int')
                 p[0].code.append(['+int', newVar1, p[1].placeList[0], baseType[1][ident]['offset']])
                 p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0]), 'offset'])
                 p[0].placeList = [newVar1]

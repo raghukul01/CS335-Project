@@ -62,7 +62,8 @@ class CodeGenerator:
                     self.asmCode.append('lea eax, [ebp'+str(retValOffset) + ']')
                 self.add_epilogue()
             else:
-                self.asmCode += code_
+                if code_[0] != 'none':
+                    self.asmCode += code_
             self.codeIndex += 1
 
         # standard epilogue
@@ -97,6 +98,14 @@ class CodeGenerator:
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+
+        info_src1 = self.helper.symbolTables[scopeInfo[2]].get(src1)
+
+        baseType = helper.getBaseType(info_src1['type'])
+        if baseType[0] in ['array', 'struct']:
+            objOffset = abs(int(self.ebpOffset(src1, scopeInfo[2], funcScope)))
+            self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = objOffset + int(src2)
+            return ['none']
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)

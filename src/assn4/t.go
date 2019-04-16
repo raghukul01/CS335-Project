@@ -1,16 +1,16 @@
 // 7plusArguements
 package main;
 
-/*
+
 type person struct {
     age int;
-    height int;
+    name int;
 };
-*/
+
 
 func main(){
-    var a int;
-    var b *int;
-    b = &a;
-    *b += 2;
+    var x type person;
+    x.age = 20;
+    x.name = 10;
+    print x.age, x.name;
 };
