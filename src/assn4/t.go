@@ -2,15 +2,19 @@
 package main;
 
 
-type person struct {
-    age int;
-    next *(type person);
+type node struct {
+    data int;
+    next *(type node);
 };
 
 
 func main(){
-    var x, y type person;
-    y.age = 20;
+    var x,y,z type node;
+    y.data = 20;
+    x.data = 10;
+    z.data = 30;
     x.next = &y;
-    print (*(x.next)).age;
+    y.next = &z;
+    z.next = &x;
+    print (*(x.next)).data, (*(y.next)).data, (*(z.next)).data;
 };

@@ -29,7 +29,13 @@ class CodeGenerator:
         if 'is_arg' in self.helper.symbolTables[identScope].table[ident]:
             offset = 8 + paramSize - 4 - self.helper.symbolTables[identScope].table[ident]['offset']
         else:
-            offset = -(self.helper.symbolTables[identScope].table[ident]['offset'] + 4 - paramSize)
+            if 'parent' in self.helper.symbolTables[identScope].table[ident]:
+                # parent = self.helper.symbolTables[identScope].table[ident]['parent']
+                # parentScope = self.helper.symbolTables[identScope].table[ident]['parentScope']
+                offset = -(self.helper.symbolTables[identScope].table[ident]['offset']  - paramSize)
+            else:
+                offset = -(self.helper.symbolTables[identScope].table[ident]['offset'] + self.helper.symbolTables[identScope].table[ident]['size'] - paramSize)
+            print(ident, offset)
         if offset >= 0:
             return '+'+str(offset)
         return str(offset)
@@ -105,6 +111,8 @@ class CodeGenerator:
         if baseType[0] == 'struct':
             objOffset = abs(int(self.ebpOffset(src1, scopeInfo[2], funcScope)))
             self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = objOffset + int(src2)
+            self.helper.symbolTables[scopeInfo[1]].table[dst]['parent'] = src1
+            # self.helper.symbolTables[scopeInfo[1]].table[dst]['parentScope'] = scopeInfo[2]
             return ['none']
         elif baseType[0] == 'array':
             objOffset = abs(int(self.ebpOffset(src1, scopeInfo[2], funcScope)))
@@ -273,15 +281,26 @@ class CodeGenerator:
         return code
     
     def assign_ptr_rhs(self, instr, scopeInfo, funcScope):
+        sz = helper.symbolTables[scopeInfo[1]].get(instr[1])['size']
         dst = instr[1]
         src = instr[2]
         code = []
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
-        code.append('mov esi, [ebp' + srcOffset + ']')
-        code.append('mov edi, [esi]')
-        code.append('mov [ebp' + dstOffset +'], edi')
+
+        ctr1 = 0
+        ctr2 = 0
+        while ctr2 < sz:
+            var1 = ctr1 + int(dstOffset)
+            if var1 >= 0:
+                var1 = '+' + str(var1)
+            code.append('mov esi, [ebp' + srcOffset + ']')
+            code.append('sub esi,' + str(ctr2))
+            code.append('mov edi, [esi]')
+            code.append('mov [ebp' + str(var1) +'], edi')
+            ctr1 += 4
+            ctr2 += 4
         return code
 
 
@@ -474,6 +493,7 @@ class CodeGenerator:
         
     def genCode(self, idx, funcScope):
         # Check instruction type and call function accordingly
+        print(self.code[idx])
         instr = self.code[idx]
         scopeInfo = self.scopeInfo[idx]
 
@@ -535,7 +555,7 @@ class CodeGenerator:
 
         if instr[0] == '*pointer':
             return self.assign_ptr_rhs(instr, scopeInfo, funcScope)
-        if instr[0] == '&int':
+        if instr[0][0] == '&':
             return self.ampersand_op(instr, scopeInfo, funcScope)
 
     def getCode(self):
