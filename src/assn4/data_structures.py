@@ -134,6 +134,8 @@ class Helper:
             return 4
         elif type_[0] == 'struct':
             sz = 0
+            if isinstance(type_[1], str):
+                return self.computeSize(type_[1])
             for key in type_[1]:
                 # enumerate the struct dictionary.
                 sz += self.computeSize(type_[1][key]['type'])

@@ -4,13 +4,13 @@ package main;
 
 type person struct {
     age int;
-    name int;
+    next *(type person);
 };
 
 
 func main(){
-    var x type person;
-    x.age = 20;
-    x.name = 10;
-    print x.age, x.name;
+    var x, y type person;
+    y.age = 20;
+    x.next = &y;
+    print (*(x.next)).age;
 };

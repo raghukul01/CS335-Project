@@ -705,14 +705,15 @@ def p_prim_expr(p):
         p[0] = p[1]
     elif p[2].name == 'Selector':
         p[0] = p[1]
-        try:
+        if True:
             baseType = helper.getBaseType(p[1].typeList[0])
             ident = p[2].extra['ident']
-
+            if isinstance(baseType[1], str):
+                baseType[1] = helper.getBaseType(baseType[1])[1]
             if baseType[0] != 'struct':
                 compilation_errors.add('TypeMismatch', line_number.get()+1, 'Before the period we must have struct type')
             elif ident not in baseType[1]:
-                err_ = 'Name ' + name_ + ' has no field, or method called ' + ident
+                err_ = 'Name ' + str(baseType[1]) + ' has no field, or method called ' + ident
                 compilation_errors.add('Field Error', line_number.get()+1, err_)
 
             else:
@@ -724,7 +725,8 @@ def p_prim_expr(p):
                 p[0].identList = p[0].placeList
                 p[0].typeList = [identType]
                 helper.symbolTables[helper.getScope()].update(newVar1, 'reference', True)
-        except:
+        else:
+            
             compilation_errors.add('TypeMismatch', line_number.get()+1, 'Before period we must have struct')
 
     elif p[2].name == 'Index':
@@ -746,6 +748,7 @@ def p_prim_expr(p):
             p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0]), helper.getScope()])
             p[0].placeList = [newVar1]
             p[0].typeList = [arrayElemtp]
+            helper.symbolTables[helper.getScope()].update(newVar1, 'reference', True)
             p[0].extra['isIndex'] = True
 
     elif p[2].name == 'Arguments':
