@@ -100,11 +100,15 @@ class CodeGenerator:
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
-        src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
+        if isinstance(scopeInfo[3], int):
+            src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
-        code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        if isinstance(scopeInfo[3], int):
+            code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        else:
+            code.append('mov esi, ' + str(src2))
         code.append('add edi, esi')
         code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
@@ -117,11 +121,15 @@ class CodeGenerator:
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
-        src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
+        if isinstance(scopeInfo[3], int):
+            src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
-        code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        if isinstance(scopeInfo[3], int):
+            code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        else:
+            code.append('mov esi, ' + str(src2))
         code.append('sub edi, esi')
         code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
@@ -133,11 +141,15 @@ class CodeGenerator:
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
-        src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
+        if isinstance(scopeInfo[3], int):
+            src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
-        code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        if isinstance(scopeInfo[3], int):
+            code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        else:
+            code.append('mov esi, ' + str(src2))
         code.append('imul edi, esi')
         code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
@@ -149,12 +161,16 @@ class CodeGenerator:
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
-        src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
+        if isinstance(scopeInfo[3], int):
+            src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
         code.append('xor edx, edx')
         code.append('mov eax, [ebp' + str(src1Offset) + ']')
-        code.append('mov ebx, [ebp' + str(src2Offset) + ']')
+        if isinstance(scopeInfo[3], int):
+            code.append('mov ebi, [ebp' + str(src2Offset) + ']')
+        else:
+            code.append('mov ebx, ' + str(src2))
         code.append('idiv ebx')
         code.append('mov [ebp' + str(dstOffset) + '], eax')
         return code
