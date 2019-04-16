@@ -1,8 +1,16 @@
 // 7plusArguements
 package main;
 
-func main(){
-    var a *int;
-    b := *a;
+/*
+type person struct {
+    age int;
+    height int;
+};
+*/
 
+func main(){
+    var a int;
+    var b *int;
+    b = &a;
+    *b += 2;
 };

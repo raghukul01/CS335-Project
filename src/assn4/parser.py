@@ -717,8 +717,12 @@ def p_prim_expr(p):
 
             else:
                 identType = helper.addUnNamedType(baseType[1][ident]['type'])
-                newVar1 = helper.newVar(identType)
-                p[0].code.append(['+' + 'int', newVar1, p[1].placeList[0], baseType[1][ident]['offset']])
+                newVar1 = helper.newVar(int)
+                pointerType = helper.addUnNamedType(['pointer', baseType[1][ident]['type']])
+                newVar2 = helper.newVar(pointerType)
+                newVar3 = helper.newVar()
+                p[0].code.append(['reference', newVar2, p[1].placeList[0]])
+                p[0].code.append(['+' + 'int', newVar1, newVar2, baseType[1][ident]['offset']])
                 p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0]), 'offset'])
                 p[0].placeList = [newVar1]
                 p[0].typeList = [identType]
