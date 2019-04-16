@@ -409,6 +409,7 @@ class Helper:
         print('scope:',self.scope)
         print('scopeStack:',self.scopeStack)
         print('offsetStack:',self.offsetStack)
+        print(self.type)
         for table in range(len(self.symbolTables)):
             print('symbolTable %d:'%table,self.symbolTables[table])
 
