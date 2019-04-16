@@ -741,10 +741,11 @@ def p_prim_expr(p):
         else:
             arrayElemtp = helper.addUnNamedType(rawType[1]['type'])
             newVar1 = helper.newVar(arrayElemtp)
+            newVar2 = helper.newVar('int')
             arrayElemSz = helper.type[arrayElemtp]['size']
-            p[0].code.append(['*' + 'int', newVar1, p[2].placeList[0], arrayElemSz])
+            p[0].code.append(['*' + 'int', newVar2, p[2].placeList[0], arrayElemSz])
             p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[2].placeList[0]), 'literal'])
-            p[0].code.append(['+' + 'int', newVar1, p[1].placeList[0], newVar1])
+            p[0].code.append(['+' + 'int', newVar1, p[1].placeList[0], newVar2])
             p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0]), helper.getScope()])
             p[0].placeList = [newVar1]
             p[0].typeList = [arrayElemtp]

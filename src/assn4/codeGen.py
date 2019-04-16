@@ -125,6 +125,7 @@ class CodeGenerator:
         info_src1 = self.helper.symbolTables[scopeInfo[2]].get(src1)
 
         baseType = helper.getBaseType(info_src1['type'])
+        # TODO add the flag logic here as well
         if baseType[0] == 'struct':
             objOffset = int(self.ebpOffset(src1, scopeInfo[2], funcScope))
             self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = -(objOffset + int(src2))
@@ -263,12 +264,18 @@ class CodeGenerator:
         dst = instr[1][1:]
         src = instr[2]
         code = []
+        instr[1] = dst
         flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+            
         code.append('mov edi, [ebp' + srcOffset + ']')
+        if flag[2] == 1:
+            code.append('mov edi [edi]')
         code.append('mov esi, [ebp' + dstOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         code.append('mov [esi], edi')
         return code
 
@@ -283,6 +290,7 @@ class CodeGenerator:
             return self.pointer_assign(instr, scopeInfo, funcScope)
 
         # if src is eax then we should assign the returned value
+        # TODO add the flag logic here
         if src == 'eax':
             data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
             baseType = helper.getBaseType(data_['type'])
@@ -451,6 +459,8 @@ class CodeGenerator:
         flag = self.setFlags(instr, scopeInfo)
         code = []
         code.append('mov esi, [ebp' + srcOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         code.append('push esi')
         code.append('push print_int')
         code.append('call printf')
@@ -460,9 +470,12 @@ class CodeGenerator:
 
     def scan_int(self, instr, scopeInfo, funcScope):
         src = instr[1]
+        flag = self.setFlags(instr, scopeInfo)
         srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
         code = []
         code.append('lea esi, [ebp' + srcOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         code.append('push esi')
         code.append('push scan_int')
         code.append('call scanf')
