@@ -27,7 +27,11 @@ class CodeGenerator:
 
         offset = 0
         if 'is_arg' in self.helper.symbolTables[identScope].table[ident]:
-            offset = 8 + paramSize - 4 - self.helper.symbolTables[identScope].table[ident]['offset']
+            if 'parent' not in self.helper.symbolTables[identScope].table[ident]:
+                offset = 8 + paramSize - self.helper.symbolTables[identScope].table[ident]['size'] - self.helper.symbolTables[identScope].table[ident]['offset']
+            else:
+                offset = 8 + paramSize - self.helper.symbolTables[identScope].table[ident]['offset']
+                
         else:
             if 'parent' in self.helper.symbolTables[identScope].table[ident]:
                 # parent = self.helper.symbolTables[identScope].table[ident]['parent']
@@ -305,8 +309,8 @@ class CodeGenerator:
             code_.append(label + ':')
             code_.append('mov edx, [eax]')
             code_.append('mov [esi], edx')
-            code_.append('sub esi, 4')
-            code_.append('sub eax, 4')
+            code_.append('add esi, 4')
+            code_.append('add eax, 4')
             code_.append('dec cx')
             code_.append('jnz '+label)
             return code_
@@ -513,9 +517,10 @@ class CodeGenerator:
         else:
             self.counter += 1
             label = 'looping' + str(self.counter)
-            iters = data_['size'] / 4
+            iters = int(data_['size'] / 4)
             code_ = ['mov esi, ebp']
             code_.append('add esi, '+offset)
+            code_.append('add esi, ' + str(data_['size'] - 4))
             code_.append('mov cx, '+str(iters))
             code_.append(label + ':')
             code_.append('mov edx, [esi]')
@@ -591,8 +596,8 @@ class CodeGenerator:
         code_.append(label + ':')
         code_.append('mov edx, [eax]')
         code_.append('mov [esi], edx')
-        code_.append('sub esi, 4')
-        code_.append('sub eax, 4')
+        code_.append('add esi, 4')
+        code_.append('add eax, 4')
         code_.append('dec cx')
         code_.append('jnz '+label)
         return code_
