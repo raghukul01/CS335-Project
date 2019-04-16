@@ -707,6 +707,7 @@ def p_prim_expr(p):
         p[0] = p[1]
         if True:
             baseType = helper.getBaseType(p[1].typeList[0])
+            print(baseType)
             ident = p[2].extra['ident']
             if isinstance(baseType[1], str):
                 baseType[1] = helper.getBaseType(baseType[1])[1]
@@ -726,7 +727,6 @@ def p_prim_expr(p):
                 p[0].typeList = [identType]
                 helper.symbolTables[helper.getScope()].update(newVar1, 'reference', True)
         else:
-
             compilation_errors.add('TypeMismatch', line_number.get()+1, 'Before period we must have struct')
 
     elif p[2].name == 'Index':
@@ -823,6 +823,7 @@ def p_expr(p):
         p[0].placeList = p[1].placeList
         p[0].code = p[1].code
         p[0].scopeInfo = p[1].scopeInfo
+        print(p[1].extra)
         p[0].extra['deref'] = p[1].extra['deref']
         p[0].extra['scope'] = helper.getScope()
     else:
@@ -901,7 +902,7 @@ def p_unary_expr(p):
         else:
             if updateNeeded:
                 p[0].typeList = p[2].typeList
-                p[0].extra = ['no']
+                p[0].extra['deref'] = ['no']
             else:
                 p[0].extra['deref'] = [p[1].extra['opcode'] + p[2].placeList[0]]
             newVar = helper.newVar(p[0].typeList[0])
