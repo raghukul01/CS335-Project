@@ -741,10 +741,11 @@ def p_prim_expr(p):
         else:
             arrayElemtp = helper.addUnNamedType(rawType[1]['type'])
             newVar1 = helper.newVar(arrayElemtp)
+            newVar2 = helper.newVar('int')
             arrayElemSz = helper.type[arrayElemtp]['size']
-            p[0].code.append(['*' + 'int', newVar1, p[2].placeList[0], arrayElemSz])
+            p[0].code.append(['*' + 'int', newVar2, p[2].placeList[0], arrayElemSz])
             p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[2].placeList[0]), 'literal'])
-            p[0].code.append(['+' + 'int', newVar1, p[1].placeList[0], newVar1])
+            p[0].code.append(['+' + 'int', newVar1, p[1].placeList[0], newVar2])
             p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0]), helper.getScope()])
             p[0].placeList = [newVar1]
             p[0].typeList = [arrayElemtp]
@@ -863,11 +864,6 @@ def p_unary_expr(p):
         p[0].placeList = p[1].placeList
         p[0].code = p[1].code
         p[0].scopeInfo = p[1].scopeInfo
-        if 'isIndex' in p[1].extra:
-            newVar = helper.newVar(p[0].typeList[0])
-            p[0].code.append(['=', newVar, '*'+ p[1].placeList[0]])
-            p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0])])
-            p[0].placeList = [newVar]
 
     elif p[1] == '!':
         tp = helper.getBaseType(p[2].typeList[0])

@@ -36,7 +36,6 @@ class CodeGenerator:
                 offset = -(self.helper.symbolTables[identScope].table[ident]['offset']  - paramSize)
             else:
                 offset = -(self.helper.symbolTables[identScope].table[ident]['offset'] + self.helper.symbolTables[identScope].table[ident]['size'] - paramSize)
-            print(ident, offset)
         if offset >= 0:
             return '+'+str(offset)
         return str(offset)
@@ -89,26 +88,45 @@ class CodeGenerator:
     def unary_minus(self, instr, scopeInfo, funcScope):
         dst = instr[1]
         src1 = instr[2]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         code.append('mov esi, 0')
         code.append('sub esi, edi')
-        code.append('mov [ebp' + str(dstOffset) + '], esi')
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], esi')
         return code
+
+    def setFlags(self, instr, scopeInfo):
+        flag = [0 for x in instr]
+        for i in range(1,len(instr)):
+            try:
+                if 'reference' in self.helper.symbolTables[scopeInfo[i]].get(instr[i]):
+                    flag[i] = 1
+            except:
+                pass
+        return flag
 
     def add_op(self, instr, scopeInfo, funcScope):
 
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
 
         info_src1 = self.helper.symbolTables[scopeInfo[2]].get(src1)
 
         baseType = helper.getBaseType(info_src1['type'])
+        # TODO add the flag logic here as well
         if baseType[0] == 'struct':
             objOffset = int(self.ebpOffset(src1, scopeInfo[2], funcScope))
             self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = -(objOffset + int(src2))
@@ -127,7 +145,6 @@ class CodeGenerator:
                     'mov [ebp' + str(dstOffset) + '], esi',
                 ]
 
-
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
         if isinstance(scopeInfo[3], int):
@@ -135,12 +152,23 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
+
         if isinstance(scopeInfo[3], int):
             code.append('mov esi, [ebp' + str(src2Offset) + ']')
+            if flag[3] == 1:
+                code.append('mov esi, [esi]')
         else:
             code.append('mov esi, ' + str(src2))
+
         code.append('add edi, esi')
-        code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
 
     def fadd_op(self, instr, scopeInfo, funcScope):
@@ -170,6 +198,7 @@ class CodeGenerator:
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
@@ -178,12 +207,22 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
+
         if isinstance(scopeInfo[3], int):
             code.append('mov esi, [ebp' + str(src2Offset) + ']')
+            if flag[3] == 1:
+                code.append('mov esi, [esi]')
         else:
             code.append('mov esi, ' + str(src2))
         code.append('sub edi, esi')
-        code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
 
     def fsub_op(self, instr, scopeInfo, funcScope):
@@ -212,6 +251,7 @@ class CodeGenerator:
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
@@ -220,12 +260,22 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
+
         if isinstance(scopeInfo[3], int):
             code.append('mov esi, [ebp' + str(src2Offset) + ']')
+            if flag[3] == 1:
+                code.append('mov esi, [esi]')
         else:
             code.append('mov esi, ' + str(src2))
         code.append('imul edi, esi')
-        code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
 
     def fmul_op(self, instr, scopeInfo, funcScope):
@@ -252,6 +302,7 @@ class CodeGenerator:
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
@@ -266,18 +317,30 @@ class CodeGenerator:
         else:
             code.append('mov ebx, ' + str(src2))
         code.append('idiv ebx')
-        code.append('mov [ebp' + str(dstOffset) + '], eax')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], eax')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], eax')
         return code
 
     def pointer_assign(self, instr, scopeInfo, funcScope):
         dst = instr[1][1:]
         src = instr[2]
         code = []
+        instr[1] = dst
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+
         code.append('mov edi, [ebp' + srcOffset + ']')
+        if flag[2] == 1:
+            code.append('mov edi [edi]')
         code.append('mov esi, [ebp' + dstOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         code.append('mov [esi], edi')
         return code
 
@@ -286,12 +349,14 @@ class CodeGenerator:
         dst = instr[1]
         src = instr[2]
         code = []
+        flag = self.setFlags(instr, scopeInfo)
 
         if dst[0] == '*':
             return self.pointer_assign(instr, scopeInfo, funcScope)
 
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
         # if src is eax then we should assign the returned value
+        # TODO add the flag logic here
         if src == 'eax':
             baseType = helper.getBaseType(data_['type'])
             offset = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
@@ -326,22 +391,40 @@ class CodeGenerator:
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
                 srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
                 code.append('mov edi, [ebp' + srcOffset + ']')
-                code.append('mov [ebp' + dstOffset + '], edi')
+                if flag[2] == 1:
+                    code.append('mov edi, [edi]')
+                if flag[1] == 1:
+                    code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+                    code.append('mov [esi], edi')
+                else:
+                    code.append('mov [ebp' + str(dstOffset) + '], edi')
             else:
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
                 code.append('mov edi, ' + str(src))
-                code.append('mov [ebp' + dstOffset + '], edi')
+                if flag[1] == 1:
+                    code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+                    code.append('mov [esi], edi')
+                else:
+                    code.append('mov [ebp' + str(dstOffset) + '], edi')
+
         return code
 
     def assign_op_ptr(self, instr, scopeInfo, funcScope):
         dst = instr[1][1:]
         src = instr[2]
+        # *t1 += t2
         code = []
+        instr[1] = dst
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
         code.append('mov edi, [ebp' + srcOffset + ']')
         code.append('mov esi, [ebp' + dstOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         if instr[0] == '+=':
             code.append('add [esi], edi')
         elif instr[0] == '-=':
@@ -361,6 +444,7 @@ class CodeGenerator:
         dst = instr[1]
         src = instr[2]
         code = []
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
@@ -372,9 +456,15 @@ class CodeGenerator:
             if var1 >= 0:
                 var1 = '+' + str(var1)
             code.append('mov esi, [ebp' + srcOffset + ']')
+            if flag[2] == 1:
+                code.append('mov esi, [esi]')
             code.append('sub esi,' + str(ctr2))
             code.append('mov edi, [esi]')
-            code.append('mov [ebp' + str(var1) +'], edi')
+            if flag[1] == 1:
+                code.append('mov esi, [ebp' + str(var1) +']')
+                code.append('mov [esi], edi')
+            else:
+                code.append('mov [ebp' + str(var1) +'], edi')
             ctr1 += 4
             ctr2 += 4
         return code
@@ -411,6 +501,7 @@ class CodeGenerator:
     def ampersand_op(self, instr, scopeInfo, funcScope):
         dst = instr[1]
         src = instr[2]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
@@ -424,6 +515,7 @@ class CodeGenerator:
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
@@ -431,7 +523,11 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        if flag[3] == 1:
+            code.append('mov esi, [esi]')
         code.append('xor eax, eax')
         code.append('cmp edi, esi')
         if instr[0] == '==int':
@@ -446,15 +542,22 @@ class CodeGenerator:
             code.append('setle al')
         elif instr[0] == '>=int':
             code.append('setge al')
-        code.append('mov [ebp' + str(dstOffset) + '], eax')
 
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], eax')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], eax')
         return code
 
     def print_int(self, instr, scopeInfo, funcScope):
         src = instr[1]
         srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
+        flag = self.setFlags(instr, scopeInfo)
         code = []
         code.append('mov esi, [ebp' + srcOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         code.append('push esi')
         code.append('push print_int')
         code.append('call printf')
@@ -476,9 +579,12 @@ class CodeGenerator:
 
     def scan_int(self, instr, scopeInfo, funcScope):
         src = instr[1]
+        flag = self.setFlags(instr, scopeInfo)
         srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
         code = []
         code.append('lea esi, [ebp' + srcOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         code.append('push esi')
         code.append('push scan_int')
         code.append('call scanf')
@@ -512,9 +618,12 @@ class CodeGenerator:
         var = instr[1]
         jLabel = instr[5]
         code = []
+        flag = self.setFlags(instr, scopeInfo)
 
         varOffset = self.ebpOffset(var, scopeInfo[1], funcScope)
         code.append('mov edi, [ebp' + varOffset + ']')
+        if flag[1] == 1:
+            code.append('mov edi, [edi]')
         code.append('cmp edi, 0')
         code.append('je ' + jLabel)
 
@@ -531,6 +640,7 @@ class CodeGenerator:
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
@@ -538,12 +648,22 @@ class CodeGenerator:
 
         code = []
         code.append('mov edi, [ebp' + str(src1Offset) + ']')
+        if flag[2] == 1:
+            code.append('mov edi, [edi]')
         code.append('mov esi, [ebp' + str(src2Offset) + ']')
+        if flag[3] == 1:
+            code.append('mov esi, [esi]')
+
         if instr[0] == '||':
             code.append('or edi, esi')
         elif instr[0] == '&&':
             code.append('and edi, esi')
-        code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
         return code
 
     def getRetVal(self, instr, scopeInfo, funcScope):
@@ -569,19 +689,29 @@ class CodeGenerator:
     def inc_dec(self, instr, scopeInfo, funcScope):
         dst = instr[1]
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+<<<<<<< HEAD
 
+=======
+        flag = self.setFlags(instr, scopeInfo)
+>>>>>>> cbbdeda57587259f049e2af9a876fa30136de250
         code = []
         code.append('mov esi, [ebp' + dstOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         if instr[0] == '++':
             code.append('inc esi')
         else:
             code.append('dec esi')
-        code.append('mov [ebp' + dstOffset + '], esi')
+
+        if flag[1] == 1:
+            code.append('mov edi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [edi], esi')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], esi')
         return code
 
     def genCode(self, idx, funcScope):
         # Check instruction type and call function accordingly
-        print(self.code[idx])
         instr = self.code[idx]
         scopeInfo = self.scopeInfo[idx]
 
