@@ -159,11 +159,26 @@ class CodeGenerator:
         code.append('mov [ebp' + str(dstOffset) + '], eax')
         return code
     
+    def pointer_assign(self, instr, scopeInfo, funcScope):
+        dst = instr[1][1:]
+        src = instr[2]
+        code = []
+
+        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+        srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+        code.append('mov edi, [ebp' + srcOffset + ']')
+        code.append('mov esi, [ebp' + dstOffset + ']')
+        code.append('mov [esi], edi')
+        return code
+
     def assign_op(self, instr, scopeInfo, funcScope):
 
         dst = instr[1]
         src = instr[2]
         code = []
+
+        if dst[0] == '*':
+            return self.pointer_assign(instr, scopeInfo, funcScope)
 
         # if src is eax then we should assign the returned value
         if src == 'eax':
@@ -197,26 +212,81 @@ class CodeGenerator:
             code.append('mov [ebp' + dstOffset + '], edi')
         return code
 
+    def assign_op_ptr(self, instr, scopeInfo, funcScope):
+        dst = instr[1][1:]
+        src = instr[2]
+        code = []
+
+        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+        srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+        code.append('mov edi, [ebp' + srcOffset + ']')
+        code.append('mov esi, [ebp' + dstOffset + ']')
+        if instr[0] == '+=':
+            code.append('add [esi], edi')
+        elif instr[0] == '-=':
+            code.append('sub [esi], edi')
+        elif instr[0] == '*=':
+            code.append('imul edi, [esi]')
+            code.append('mov [esi], edi')
+        elif instr[0] == '/=':
+            code.append('xor edx, edx')
+            code.append('mov eax, [esi]')
+            code.append('idiv edi')
+            code.append('mov [esi], eax')
+        return code
+    
+    def assign_ptr_rhs(self, instr, scopeInfo, funcScope):
+        dst = instr[1]
+        src = instr[2]
+        code = []
+
+        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+        srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+        code.append('mov esi, [ebp' + srcOffset + ']')
+        code.append('mov edi, [esi]')
+        code.append('mov [ebp' + dstOffset +'], edi')
+        return code
+
+
     def add_assign_op(self, instr, scopeInfo, funcScope):
+        if instr[1][0] == '*':
+            return self.assign_op_ptr(instr, scopeInfo, funcScope)
         instr.insert(2,instr[1])
         scopeInfo.insert(2, scopeInfo[1])
         return self.add_op(instr, scopeInfo, funcScope)
     
     def sub_assign_op(self, instr, scopeInfo, funcScope):
+        if instr[1][0] == '*':
+            return self.assign_op_ptr(instr, scopeInfo, funcScope)
         instr.insert(2,instr[1])
         scopeInfo.insert(2, scopeInfo[1])
         return self.sub_op(instr, scopeInfo, funcScope)
     
     def mul_assign_op(self, instr, scopeInfo, funcScope):
+        if instr[1][0] == '*':
+            return self.assign_op_ptr(instr, scopeInfo, funcScope)
         instr.insert(2,instr[1])
         scopeInfo.insert(2, scopeInfo[1])
         return self.mul_op(instr, scopeInfo, funcScope)
     
     def div_assign_op(self, instr, scopeInfo, funcScope):
+        if instr[1][0] == '*':
+            return self.assign_op_ptr(instr, scopeInfo, funcScope)
         instr.insert(2,instr[1])
         scopeInfo.insert(2, scopeInfo[1])
         return self.div_op(instr, scopeInfo, funcScope)
 
+    def ampersand_op(self, instr, scopeInfo, funcScope):
+        dst = instr[1]
+        src = instr[2]
+
+        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+        srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+        code = []
+
+        code.append('lea edi, [ebp'+ srcOffset +']')
+        code.append('mov [ebp'+srcOffset+'], edi')
+        return code
 
     def relops_cmp(self, instr, scopeInfo, funcScope):
         dst = instr[1]
@@ -425,6 +495,11 @@ class CodeGenerator:
         elif instr[0] == 'call':
             # function call
             return ['call '+instr[1]]
+            
+        if instr[0] == '*pointer':
+            return self.assign_ptr_rhs(instr, scopeInfo, funcScope)
+        if instr[0] == '&int':
+            return self.ampersand_op(instr, scopeInfo, funcScope)
 
     def getCode(self):
         while True:
