@@ -846,7 +846,8 @@ def p_expr(p):
                 p[0].code.append([p[2].extra['opcode'], newVar, p[1].placeList[0], p[3].placeList[0]])
                 p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0]), helper.findScope(p[3].placeList[0])])
             else:
-                p[0].code.append([p[2].extra['opcode'] + p[1].typeList[0], newVar, p[1].placeList[0], p[3].placeList[0]])
+                baseType = helper.getBaseType(p[1].typeList[0])
+                p[0].code.append([p[2].extra['opcode'] + baseType[0], newVar, p[1].placeList[0], p[3].placeList[0]])
                 p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0]), helper.findScope(p[3].placeList[0])])
             p[0].placeList.append(newVar)
             p[0].extra['scope'] = helper.getScope()
