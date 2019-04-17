@@ -1,20 +1,11 @@
 // 7plusArguements
 package main;
 
-
-type node struct {
-    data int;
-    next *(type node);
+func manyVariables(a int, b int, c int, d int, e int, f int, g int, h int, i int, j int) int{
+    return a+b+c+d+e+f+g+h+i+j;
 };
 
-
 func main(){
-    var x,y,z type node;
-    y.data = 20;
-    x.data = 10;
-    z.data = 30;
-    x.next = &y;
-    y.next = &z;
-    z.next = &x;
-    print (*(x.next)).data, (*(y.next)).data, (*(z.next)).data;
+    print manyVariables(1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+    print manyVariables(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 };
