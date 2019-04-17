@@ -9,6 +9,9 @@ class CodeGenerator:
         self.asmCode.append('global main')
         self.asmCode.append('extern printf')
         self.asmCode.append('extern scanf')
+        self.asmCode.append('extern malloc')
+        self.asmCode.append('extern gets')
+        self.asmCode.append('extern puts')
         self.asmCode.append('section .data')
         self.asmCode.append('print_int db "%i ", 0x00')
         self.asmCode.append('print_float db "%f ", 0x00')
@@ -600,6 +603,19 @@ class CodeGenerator:
         code.append('pop esi')
         return code
 
+    def print_string(self, instr, scopeInfo, funcScope):
+        src = instr[1]
+        flag = self.setFlags(instr, scopeInfo)
+        srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
+        code = []
+
+        code.append('mov esi, [ebp' + srcOffset + ']')
+
+        code.append('push esi')
+        code.append('call puts')
+        code.append('pop esi')
+        return code
+
     def scan_int(self, instr, scopeInfo, funcScope):
         src = instr[1]
         flag = self.setFlags(instr, scopeInfo)
@@ -612,6 +628,23 @@ class CodeGenerator:
         code.append('push scan_int')
         code.append('call scanf')
         code.append('pop esi')
+        code.append('pop esi')
+        return code
+
+    def scan_string(self, instr, scopeInfo, funcScope):
+        src = instr[1]
+        flag = self.setFlags(instr, scopeInfo)
+        srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
+        code = []
+
+        code.append('mov edi, 100')
+        code.append('call malloc')
+        code.append('pop edi')
+        code.append('mov [ebp' + srcOffset + '],  eax')
+        code.append('mov esi, eax')
+
+        code.append('push esi')
+        code.append('call gets')
         code.append('pop esi')
         return code
 
@@ -791,8 +824,12 @@ class CodeGenerator:
             return self.print_int(instr, scopeInfo, funcScope)
         if instr[0] == 'print_float':
             return self.print_float(instr, scopeInfo, funcScope)
+        if instr[0] == 'print_string':
+            return self.print_string(instr, scopeInfo, funcScope)
         elif instr[0] == 'scan_int':
             return self.scan_int(instr, scopeInfo, funcScope)
+        elif instr[0] == 'scan_string':
+            return self.scan_string(instr, scopeInfo, funcScope)
         elif instr[0] == 'param':
             return self.param(instr, scopeInfo, funcScope)
         elif instr[0] == 'call':
