@@ -1,3 +1,5 @@
+// Not Working
+
 package main;
 
 type s struct {
@@ -6,10 +8,10 @@ type s struct {
 };
 
 type t struct {
-	s type struct[10];
+	x [10]type s;
 };
 
-func f(a [10]*int, b [8][5]int){
+func f(a [5]*int, b [5][5]int){
     b[1][2] = 10;
 };
 
