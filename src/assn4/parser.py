@@ -1062,7 +1062,7 @@ def p_inc_dec(p):
         err_ = str(p[1].typeList[0]) + 'cannot be incremented/decremented'
         compilation_errors.add('TypeMismatch', line_number.get()+1, err_)
     p[0].code.append([p[2], p[1].placeList[0], p[1].placeList[0]])
-    p[0].scopeInfo.append(['', helper.getScope(), helper.findScope(p[1].placeList[0])])
+    p[0].scopeInfo.append(['', helper.findScope(p[1].placeList[0]), helper.findScope(p[1].placeList[0])])
 
 def p_assignment(p):
     ''' Assignment : ExpressionList assign_op ExpressionList'''

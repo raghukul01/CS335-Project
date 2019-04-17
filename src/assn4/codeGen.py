@@ -871,7 +871,6 @@ if __name__=='__main__':
     assert(len(rootNode.code) == len(rootNode.scopeInfo))
     helper = pkl.load(open('helper.p', 'rb'))
 
-    # print(rootNode.scopeInfo)
     # Now can use helper class functions
 
     codeGen = CodeGenerator(helper, rootNode)
