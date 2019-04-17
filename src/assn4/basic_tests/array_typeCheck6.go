@@ -21,7 +21,6 @@ func main(){
     var i int;
     var fp *float;
     y.x[3].b[1][2] = 5;
-    f();
-    x.b = 4;
-    print x.b, y.b;
+    f(c, y.x[3].b);
+    print y.x[3].b[1][2];
 };
