@@ -373,27 +373,30 @@ class CodeGenerator:
             return self.pointer_assign(instr, scopeInfo, funcScope)
 
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
-        # if src is eax then we should assign the returned value
+        baseType = helper.getBaseType(data_['type'])
+
         # TODO add the flag logic here
-        if src == 'eax':
-            baseType = helper.getBaseType(data_['type'])
-            offset = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
+        if baseType[0] in ['struct', 'array']:
+            offset1 = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
+            offset2 = self.ebpOffset(instr[2], scopeInfo[2], funcScope)
 
             self.counter += 1
             label = 'looping' + str(self.counter)
             iters = int(data_['size'] / 4)
-            code_ = ['mov esi, ebp']
-            code_.append('add esi, '+offset)
+            code_ = ['mov esi, ebp', 'mov ebx, ebp']
+            code_.append('add esi, '+offset1)
+            code_.append('add ebx, '+offset2)
             code_.append('mov cx, '+str(iters))
             code_.append(label + ':')
-            code_.append('mov edx, [eax]')
+            code_.append('mov edx, [ebx]')
             code_.append('mov [esi], edx')
             code_.append('add esi, 4')
-            code_.append('add eax, 4')
+            code_.append('add ebx, 4')
             code_.append('dec cx')
             code_.append('jnz '+label)
             return code_
-        if data_['type'] == 'float':
+
+        if baseType == ['float']:
             if isinstance(scopeInfo[2], int):
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
                 srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
