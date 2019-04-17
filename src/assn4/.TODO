@@ -1,24 +1,7 @@
-passing parameters by reference.
+Float instructions need to be added
 
-keeping track of scope in 3AC for each varible.
+Mutual recursion
 
-2-D arrays cannot be declared as of now.
+Struct of arrays/ arrays of struct
 
-Linked list does not work.
-
-Returning of structure from a function call.
-
-Type storage should modified to enhance working.
-
-Addressing mode.
-
-
-
-4 byte allignment should be tackled in offset
-
-expand the code gen for struct assignment, to do element by element assignment
-
-Need to add functionality to print the function return value directly (print fib(10); should work)
-
-
-
+arrays/struct returns from a function
