@@ -739,7 +739,7 @@ def p_prim_expr(p):
                 p[0].placeList = [newVar1]
                 p[0].identList = p[0].placeList
                 p[0].typeList = [identType]
-                # helper.symbolTables[helper.getScope()].update(newVar1, 'reference', True)
+                helper.symbolTables[helper.getScope()].update(newVar1, 'reference', True)
         else:
             compilation_errors.add('TypeMismatch', line_number.get()+1, 'Before period we must have struct')
 
