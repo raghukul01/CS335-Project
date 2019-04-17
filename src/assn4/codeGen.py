@@ -392,6 +392,8 @@ class CodeGenerator:
                 code.append('fstp qword [ebp' + dstOffset + ']')
         else:
             if isinstance(scopeInfo[2], int):
+                print(self.asmCode)
+                print(flag)
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
                 srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
                 code.append('mov edi, [ebp' + srcOffset + ']')
