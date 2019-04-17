@@ -133,13 +133,27 @@ class CodeGenerator:
         info_src1 = self.helper.symbolTables[scopeInfo[2]].get(src1)
 
         baseType = helper.getBaseType(info_src1['type'])
-        # TODO add the flag logic here as well
         if baseType[0] == 'struct':
-            objOffset = int(self.ebpOffset(src1, scopeInfo[2], funcScope))
-            self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = objOffset + int(src2)
-            self.helper.symbolTables[scopeInfo[1]].table[dst]['parent'] = src1
-            # self.helper.symbolTables[scopeInfo[1]].table[dst]['parentScope'] = scopeInfo[2]
-            return ['none']
+            objOffset = self.ebpOffset(src1, scopeInfo[2], funcScope)
+            dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+            code_ = []
+            if flag[2] == 1:
+                code_.append('mov edx, [ebp'+str(objOffset)+']')
+                # dont add ebp
+            else:
+                code_.append('mov edx, '+str(objOffset))
+            code_.append('mov esi, ' + str(src2))
+            if flag[3] == 1:
+                code_.append('mov esi, [esi]')
+            code_.append('add edx, esi')
+
+            if flag[2] == 1:
+                code_.append('mov esi, 0')
+            else:
+                code_.append('mov esi, ebp')
+            code_.append('add esi, edx')
+            code_.append('mov [ebp' + str(dstOffset) + '], esi')
+            return code_
         elif baseType[0] == 'array':
             objOffset = self.ebpOffset(src1, scopeInfo[2], funcScope)
             dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
@@ -375,7 +389,6 @@ class CodeGenerator:
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
         baseType = helper.getBaseType(data_['type'])
 
-        # TODO add the flag logic here
         if baseType[0] in ['struct', 'array']:
             offset1 = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
             offset2 = self.ebpOffset(instr[2], scopeInfo[2], funcScope)
@@ -386,6 +399,10 @@ class CodeGenerator:
             code_ = ['mov esi, ebp', 'mov ebx, ebp']
             code_.append('add esi, '+offset1)
             code_.append('add ebx, '+offset2)
+            if flag[2] == 1:
+                code_.append('mov ebx, [ebp' + offset2 + ']')
+            if flag[1] == 1:
+                code_.append('mov esi, [ebp' + offset1 + ']')
             code_.append('mov cx, '+str(iters))
             code_.append(label + ':')
             code_.append('mov edx, [ebx]')
