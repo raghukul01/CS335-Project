@@ -668,16 +668,25 @@ class CodeGenerator:
     def param(self, instr, scopeInfo, funcScope):
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
         baseType = helper.getBaseType(data_['type'])
+        flag = self.setFlags(instr, scopeInfo)
         offset = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
         if baseType[0] in ['int', 'bool', 'float', 'string']:
-
-            return ['mov edx, [ebp' + offset + ']', 'push edx']
+            if flag[1] == 1:
+                return [
+                    'mov edx, [ebp' + offset + ']',
+                    'mov edx, [edx]',
+                    'push edx',
+                ]
+            else:
+                return ['mov edx, [ebp' + offset + ']', 'push edx']
         else:
             self.counter += 1
             label = 'looping' + str(self.counter)
             iters = int(data_['size'] / 4)
             code_ = ['mov esi, ebp']
             code_.append('add esi, '+offset)
+            if flag[1] == 1:
+                code_.append('mov esi, [ebp'+offset+']')
             code_.append('add esi, ' + str(data_['size'] - 4))
             code_.append('mov cx, '+str(iters))
             code_.append(label + ':')

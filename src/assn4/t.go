@@ -1,32 +1,32 @@
-// Not Working
-
 package main;
 
-type node struct {
-	val int;
-	next *(type node);
+func bin_search(arr [100]int, len int, key int) int{
+	first := 0;
+	last := len - 1;
+
+	for ;first<=last;{
+		middle := first+(last - first)/2;
+		if arr[middle] == key{
+			return middle+1;
+		};
+		if arr[middle] < key{
+			first = middle + 1;
+		}
+		else{
+			last = middle-1;
+		};
+	};
+	return -1;
 };
 
 func main(){
-    var root [100](type node);
-    var n int;
-    var v int;
-    scan n;
-    for i := 0;i < n;i++ {
-        scan root[i].val;
-        root[i].next = &(root[i+1]);
-    };
-
-    var key int;
-    scan key;
-
-    var head (type node);
-    head = (root[0]);
-
-    for i := 0;i < n;i++ {
-        if head.val == key {
-            print i;
-        };
-        head = *(head.next);
-    };
+	var a [100]int;
+	var n, key int;
+	scan n;
+	scan key;
+	for i:=0;i<n;i++{
+		scan a[i];
+	};
+	idx := bin_search(a, n, key);
+	print idx;
 };
