@@ -10,7 +10,7 @@ type hello_world struct {
 	a int;
 };
 
-func get_a(k type hello){
+func get_a(k type hello) int{
     return k.a;
 };
 

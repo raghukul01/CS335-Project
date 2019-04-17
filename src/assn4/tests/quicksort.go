@@ -1,11 +1,7 @@
 // QuickSort
 package main;
 
-var arr [6]int;
-// {1, 74, 37, 19, 6};
-
-
-func partition (low int, high int) int{
+func partition (arr []int, low int, high int) int{
 	var pivot int = arr[high];
 	var i int = (low - 1);
 
@@ -23,7 +19,7 @@ func partition (low int, high int) int{
     return (i + 1);
 };
 
-func quickSort(low int, high int){
+func quickSort(arr []int, low int, high int){
 	if low < high{
 		var pi int;
         pi = partition(low, high);
@@ -35,6 +31,10 @@ func quickSort(low int, high int){
 
 func main()
 {
+
+	var arr [6]int;
+	// {1, 74, 37, 19, 6};
+
     // arr[0] = 1;
     // arr[1] = 74;
     // arr[2] = 37;
@@ -47,5 +47,9 @@ func main()
     };
 
 	var n int = 6;
-	quickSort(0, n-1);
+	quickSort(arr, 0, n-1);
+
+	for i:=0; i<6; i++{
+        print arr[i];
+    };
 };
