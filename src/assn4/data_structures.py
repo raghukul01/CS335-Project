@@ -47,6 +47,8 @@ class SymbolTable:
         self.metadata = {}
         self.metadata['name'] = 'global'
         self.metadata['largest'] = 0
+        self.maybe = []
+        self.maybeScope = {}
 
         # metadata has a key 'is_function' to check if the current symbol table is activation record.
 
@@ -293,6 +295,10 @@ class Helper:
             if self.symbolTables[funcscope[idx]].metadata['signature'] == typeList:
                 sameSig += 1
 
+        for idx in range(len(funcscope)-1):
+            if fname in self.symbolTables[0].maybe:
+                sameSig = 0
+
         if sameSig > 0:
             return 'function ' + fname + ' redeclared'
 
@@ -350,16 +356,28 @@ class Helper:
         # This cancer code is just to handle the case of linked list (pointer to struct)
         try:
             if tp1[0] == 'pointer' and tp1[1][0] == 'struct' and isinstance(tp1[1][1], str):
-                tp1 = ['pointer', ['struct', self.getBaseType(tp1[1][1])[1]]]
+                tp1 = ['pointer', self.getBaseType(tp1[1][1])]
         except:
             pass
         try:
             if tp2[0] == 'pointer' and tp2[1][0] == 'struct' and isinstance(tp2[1][1], str):
-                tp2 = ['pointer'['struct', self.getBaseType(tp2[1][1])]]
+                tp2 = ['pointer', self.getBaseType(tp2[1][1])]
         except:
             pass
-        # cancer ends, can do chemo now :P
 
+        try:
+            if tp1[0] == 'struct' and isinstance(tp1[1], str):
+                tp1 = self.getBaseType(tp1[1])
+        except:
+            pass
+        
+        try:
+            if tp2[0] == 'struct' and isinstance(tp2[1], str):
+                tp2 = self.getBaseType(tp2[1])
+        except:
+            pass
+
+        # cancer ends, can do chemo now :P
         if tp1 == tp2:
             return True
         else:
@@ -369,7 +387,6 @@ class Helper:
         # checks for a given function name and argument type list, matches with the function signature
         # returns 'cool' if no error found
         funcScope = self.lookUpfunc(name)
-        # print(funcScope)
         if funcScope == -1:
             return 'function ' + name + ' not declared'
 

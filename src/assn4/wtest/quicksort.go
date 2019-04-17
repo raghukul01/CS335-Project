@@ -1,24 +1,6 @@
 // QuickSort
 package main;
 
-func partition (arr [100]int, l int, h int) [100]int{
-	x := arr[h];
-	i := l-1;
-
-	for j=l;j<=h-1;j++{
-		if arr[j] <= x{
-			i++;
-			tmp := arr[i];
-			arr[i] = arr[j];
-			arr[j] = tmp;
-		};
-	};
-	tmp := arr[i+1];
-	arr[i+1] = arr[h];
-	arr[h] = tmp;
-	return (i+1);
-};
-
 func quickSort(arr [100]int, l int, h int) [100]int{
 	var stack [100]int;
 	capacity := h-l+1;
@@ -29,7 +11,7 @@ func quickSort(arr [100]int, l int, h int) [100]int{
 	top++;
 	stack[top] = h;
 
-	for ;;{
+	for ;top>=0;{
 		h = stack[top];
 		top--;
 		l = stack[top];
@@ -39,7 +21,7 @@ func quickSort(arr [100]int, l int, h int) [100]int{
 		x := arr[h];
 		i := l-1;
 
-		for j=l;j<=h-1;j++{
+		for j:=l;j<=(h-1);j++{
 			if arr[j] <= x{
 				i++;
 				tmp := arr[i];
@@ -53,7 +35,7 @@ func quickSort(arr [100]int, l int, h int) [100]int{
 		// Partition ends
 
 		p := i+1;
-		if (p-1) < l {
+		if (p-1) > l {
 			top++;
 			stack[top] = l;
 			top++;
@@ -76,9 +58,9 @@ func main()
 	var arr [100]int;
 	scan n;
 
-    for i:=0; i<n; i++{
-        scan arr[i];
-    };
+	for i:=0; i<n; i++{
+		scan arr[i];
+	};
 
 	arr = quickSort(arr, 0, n-1);
 
@@ -86,3 +68,4 @@ func main()
         print arr[i];
     };
 };
+

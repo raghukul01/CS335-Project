@@ -16,8 +16,8 @@ class CodeGenerator:
         self.asmCode.append('extern printf')
         self.asmCode.append('extern scanf')
         self.asmCode.append('extern malloc')
-        self.asmCode.append('extern gets')
-        self.asmCode.append('extern puts')
+        # self.asmCode.append('extern gets')
+        # self.asmCode.append('extern puts')
         # self.asmCode.append('extern farray_print')
         self.asmCode.append('section .data')
         self.asmCode.append('temp dq 0')
@@ -25,7 +25,7 @@ class CodeGenerator:
         self.asmCode.append('farray_print db "%f ", 0x0a, 0x00')
         self.asmCode.append('print_line db "", 0x0a, 0x00')
         self.asmCode.append('scan_int db "%d", 0')
-        self.dataIndex = 8
+        self.dataIndex = 6
         self.codeIndex = 0
         self.asmCode.append('section .text')
         self.helper = helper
@@ -49,7 +49,7 @@ class CodeGenerator:
             if 'parent' in self.helper.symbolTables[identScope].table[ident]:
                 # parent = self.helper.symbolTables[identScope].table[ident]['parent']
                 # parentScope = self.helper.symbolTables[identScope].table[ident]['parentScope']
-                offset = -(self.helper.symbolTables[identScope].table[ident]['offset']  - paramSize)
+                offset = self.helper.symbolTables[identScope].table[ident]['offset']
             else:
                 offset = -(self.helper.symbolTables[identScope].table[ident]['offset'] + self.helper.symbolTables[identScope].table[ident]['size'] - paramSize)
         if offset >= 0:
@@ -170,13 +170,27 @@ class CodeGenerator:
         info_src1 = self.helper.symbolTables[scopeInfo[2]].get(src1)
 
         baseType = helper.getBaseType(info_src1['type'])
-        # TODO add the flag logic here as well
         if baseType[0] == 'struct':
-            objOffset = int(self.ebpOffset(src1, scopeInfo[2], funcScope))
-            self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = -(objOffset + int(src2))
-            self.helper.symbolTables[scopeInfo[1]].table[dst]['parent'] = src1
-            # self.helper.symbolTables[scopeInfo[1]].table[dst]['parentScope'] = scopeInfo[2]
-            return ['none']
+            objOffset = self.ebpOffset(src1, scopeInfo[2], funcScope)
+            dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+            code_ = []
+            if flag[2] == 1:
+                code_.append('mov edx, [ebp'+str(objOffset)+']')
+                # dont add ebp
+            else:
+                code_.append('mov edx, '+str(objOffset))
+            code_.append('mov esi, ' + str(src2))
+            if flag[3] == 1:
+                code_.append('mov esi, [esi]')
+            code_.append('add edx, esi')
+
+            if flag[2] == 1:
+                code_.append('mov esi, 0')
+            else:
+                code_.append('mov esi, ebp')
+            code_.append('add esi, edx')
+            code_.append('mov [ebp' + str(dstOffset) + '], esi')
+            return code_
         elif baseType[0] == 'array':
             objOffset = self.ebpOffset(src1, scopeInfo[2], funcScope)
             dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
@@ -238,8 +252,8 @@ class CodeGenerator:
             src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
+
         code.append('fld dword [ebp' + str(src1Offset) + ']')
-        print(scopeInfo)
         if isinstance(scopeInfo[3], int):
             code.append('fadd dword [ebp' + str(src2Offset) + ']')
         else:
@@ -289,7 +303,7 @@ class CodeGenerator:
         return code
 
     def fsub_op(self, instr, scopeInfo, funcScope):
-        print(instr)
+        # print(instr)
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
@@ -300,8 +314,8 @@ class CodeGenerator:
             src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
+
         code.append('fld dword [ebp' + str(src1Offset) + ']')
-        print(scopeInfo)
         if isinstance(scopeInfo[3], int):
             code.append('fsub dword [ebp' + str(src2Offset) + ']')
         else:
@@ -462,28 +476,33 @@ class CodeGenerator:
             return self.pointer_assign(instr, scopeInfo, funcScope)
 
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
-        # if src is eax then we should assign the returned value
-        # TODO add the flag logic here
-        if src == 'eax':
-            baseType = helper.getBaseType(data_['type'])
-            offset = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
+        baseType = helper.getBaseType(data_['type'])
+
+        if baseType[0] in ['struct', 'array']:
+            offset1 = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
+            offset2 = self.ebpOffset(instr[2], scopeInfo[2], funcScope)
 
             self.counter += 1
             label = 'looping' + str(self.counter)
             iters = int(data_['size'] / 4)
-            code_ = ['mov esi, ebp']
-            code_.append('add esi, '+offset)
+            code_ = ['mov esi, ebp', 'mov ebx, ebp']
+            code_.append('add esi, '+offset1)
+            code_.append('add ebx, '+offset2)
+            if flag[2] == 1:
+                code_.append('mov ebx, [ebp' + offset2 + ']')
+            if flag[1] == 1:
+                code_.append('mov esi, [ebp' + offset1 + ']')
             code_.append('mov cx, '+str(iters))
             code_.append(label + ':')
-            code_.append('mov edx, [eax]')
+            code_.append('mov edx, [ebx]')
             code_.append('mov [esi], edx')
             code_.append('add esi, 4')
-            code_.append('add eax, 4')
+            code_.append('add ebx, 4')
             code_.append('dec cx')
             code_.append('jnz '+label)
             return code_
 
-        if data_['type'] == 'float':
+        if baseType == ['float']:
             if isinstance(scopeInfo[2], int):
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
                 srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
@@ -559,31 +578,31 @@ class CodeGenerator:
         sz = helper.symbolTables[scopeInfo[1]].get(instr[1])['size']
         dst = instr[1]
         src = instr[2]
-        code = []
         flag = self.setFlags(instr, scopeInfo)
 
-        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
-        srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+        offset1 = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
+        offset2 = self.ebpOffset(instr[2], scopeInfo[2], funcScope)
 
-        ctr1 = 0
-        ctr2 = 0
-        while ctr2 < sz:
-            var1 = ctr1 + int(dstOffset)
-            if var1 >= 0:
-                var1 = '+' + str(var1)
-            code.append('mov esi, [ebp' + srcOffset + ']')
-            if flag[2] == 1:
-                code.append('mov esi, [esi]')
-            code.append('sub esi,' + str(ctr2))
-            code.append('mov edi, [esi]')
-            if flag[1] == 1:
-                code.append('mov esi, [ebp' + str(var1) +']')
-                code.append('mov [esi], edi')
-            else:
-                code.append('mov [ebp' + str(var1) +'], edi')
-            ctr1 += 4
-            ctr2 += 4
-        return code
+        self.counter += 1
+        label = 'looping' + str(self.counter)
+        iters = int(sz / 4)
+        code_ = ['mov esi, ebp', 'mov ebx, ebp']
+        code_.append('add esi, '+offset1)
+        code_.append('add ebx, [ebp' + offset2 + ']')
+        if flag[2] == 1:
+            code_.append('mov ebx, [ebp' + offset2 + ']')
+            code_.append('mov ebx, [ebx]')
+        if flag[1] == 1:
+            code_.append('mov esi, [ebp' + offset1 + ']')
+        code_.append('mov cx, '+str(iters))
+        code_.append(label + ':')
+        code_.append('mov edx, [ebx]')
+        code_.append('mov [esi], edx')
+        code_.append('add esi, 4')
+        code_.append('add ebx, 4')
+        code_.append('dec cx')
+        code_.append('jnz '+label)
+        return code_
 
 
     def add_assign_op(self, instr, scopeInfo, funcScope):
@@ -623,16 +642,18 @@ class CodeGenerator:
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
         code = []
 
-        # if flag[2] == 1:
-        #     code.append('mov edi, [ebp'+ srcOffset +']')
-        # else:
-        code.append('lea edi, [ebp'+ srcOffset +']')
 
-        # if flag[2] == 1:
-        #     code.append('mov esi, [ebp' + dstOffset + ']')
-        #     code.append('mov [esi], edi')
-        # else:
-        code.append('mov [ebp'+dstOffset+'], edi')
+        if flag[2] == 1:
+            code.append('mov edi, [ebp'+ srcOffset +']')
+        else:
+            code.append('lea edi, [ebp'+ srcOffset +']')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp' + dstOffset + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp'+dstOffset+'], edi')
+
         return code
 
     def relops_cmp(self, instr, scopeInfo, funcScope):
@@ -803,16 +824,25 @@ class CodeGenerator:
     def param(self, instr, scopeInfo, funcScope):
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
         baseType = helper.getBaseType(data_['type'])
+        flag = self.setFlags(instr, scopeInfo)
         offset = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
         if baseType[0] in ['int', 'bool', 'float', 'string']:
-
-            return ['mov edx, [ebp' + offset + ']', 'push edx']
+            if flag[1] == 1:
+                return [
+                    'mov edx, [ebp' + offset + ']',
+                    'mov edx, [edx]',
+                    'push edx',
+                ]
+            else:
+                return ['mov edx, [ebp' + offset + ']', 'push edx']
         else:
             self.counter += 1
             label = 'looping' + str(self.counter)
             iters = int(data_['size'] / 4)
             code_ = ['mov esi, ebp']
             code_.append('add esi, '+offset)
+            if flag[1] == 1:
+                code_.append('mov esi, [ebp'+offset+']')
             code_.append('add esi, ' + str(data_['size'] - 4))
             code_.append('mov cx, '+str(iters))
             code_.append(label + ':')
@@ -877,7 +907,6 @@ class CodeGenerator:
 
     def getRetVal(self, instr, scopeInfo, funcScope):
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
-        baseType = helper.getBaseType(data_['type'])
         offset = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
 
         self.counter += 1
@@ -1014,7 +1043,6 @@ if __name__=='__main__':
     assert(len(rootNode.code) == len(rootNode.scopeInfo))
     helper = pkl.load(open('helper.p', 'rb'))
 
-    # print(rootNode.scopeInfo)
     # Now can use helper class functions
 
     codeGen = CodeGenerator(helper, rootNode)
