@@ -1,5 +1,11 @@
 import pickle as pkl
+import random
+import string
+import struct
 from data_structures import Helper, Node
+
+def binary(num):
+    return ''.join('{:0>8b}'.format(c) for c in struct.pack('!f', num))
 
 asmCode = []
 
@@ -12,9 +18,10 @@ class CodeGenerator:
         self.asmCode.append('extern malloc')
         self.asmCode.append('extern gets')
         self.asmCode.append('extern puts')
+        # self.asmCode.append('extern farray_print')
         self.asmCode.append('section .data')
         self.asmCode.append('print_int db "%i ", 0x00')
-        self.asmCode.append('print_float db "%f ", 0x00')
+        self.asmCode.append('farray_print dq "%x ", 0x00')
         self.asmCode.append('print_line db "", 0x0a, 0x00')
         self.asmCode.append('scan_int db "%d", 0')
         self.dataIndex = 8
@@ -35,7 +42,7 @@ class CodeGenerator:
                 offset = 8 + paramSize - self.helper.symbolTables[identScope].table[ident]['size'] - self.helper.symbolTables[identScope].table[ident]['offset']
             else:
                 offset = 8 + paramSize - self.helper.symbolTables[identScope].table[ident]['offset']
-                
+
         else:
             if 'parent' in self.helper.symbolTables[identScope].table[ident]:
                 # parent = self.helper.symbolTables[identScope].table[ident]['parent']
@@ -201,14 +208,22 @@ class CodeGenerator:
             src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
-        code.append('fld qword [ebp' + str(src1Offset) + ']')
+        code.append('fld dword [ebp' + str(src1Offset) + ']')
         print(scopeInfo)
         if isinstance(scopeInfo[3], int):
-            code.append('fld qword [ebp' + str(src2Offset) + ']')
+            code.append('fadd dword [ebp' + str(src2Offset) + ']')
         else:
-            code.append('fld ' + str(src2))
-        code.append('faddp')
-        code.append('fstp qword [ebp' + str(dstOffset) + ']')
+            binaryCode = binary(float(src2))
+
+            code.append('mov edi, 0b' + str(binaryCode))
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+            # rand_str = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
+            # self.asmCode.insert(8, str(rand_str) + ': dq ' + str(src2))
+            # self.dataIndex += 1
+            code.append('fadd dword [ebp' + str(dstOffset) + ']')
+        # code.append('faddp')
+        code.append('fstp dword [ebp' + str(dstOffset) + ']')
         return code
 
     def sub_op(self, instr, scopeInfo, funcScope):
@@ -255,14 +270,22 @@ class CodeGenerator:
             src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
-        code.append('fld qword [ebp' + str(src1Offset) + ']')
+        code.append('fld dword [ebp' + str(src1Offset) + ']')
         print(scopeInfo)
         if isinstance(scopeInfo[3], int):
-            code.append('fld qword [ebp' + str(src2Offset) + ']')
+            code.append('fsub dword [ebp' + str(src2Offset) + ']')
         else:
-            code.append('fld ' + str(src2))
-        code.append('fsubp')
-        code.append('fstp qword [ebp' + str(dstOffset) + ']')
+            binaryCode = binary(float(src2))
+
+            code.append('mov edi, 0b' + str(binaryCode))
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+            # rand_str = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
+            # self.asmCode.insert(8, str(rand_str) + ': dq ' + str(src2))
+            # self.dataIndex += 1
+            code.append('fsub dword [ebp+' + str(dstOffset) + ']')
+        # code.append('fsubp')
+        code.append('fstp dword [ebp' + str(dstOffset) + ']')
         return code
 
     def mul_op(self, instr, scopeInfo, funcScope):
@@ -307,13 +330,21 @@ class CodeGenerator:
             src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
 
         code = []
-        code.append('fld qword [ebp' + str(src1Offset) + ']')
+        code.append('fld dword [ebp' + str(src1Offset) + ']')
         if isinstance(scopeInfo[3], int):
-            code.append('fld qword [ebp' + str(src2Offset) + ']')
+            code.append('fmul dword [ebp' + str(src2Offset) + ']')
         else:
-            code.append('fld ' + str(src2))
-        code.append('fmul qword [ebp' + str(src1Offset) + ']')
-        code.append('fstp qword [ebp' + str(dstOffset) + ']')
+            binaryCode = binary(float(src2))
+
+            code.append('mov edi, 0b' + str(binaryCode))
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+            # rand_str = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
+            # self.asmCode.insert(8, str(rand_str) + ': dq ' + str(src2))
+            # self.dataIndex += 1
+            code.append('fmul dword [ebp' + str(dstOffset) + ']')
+        # code.append('fmulp st1, st0')
+        code.append('fstp dword [ebp' + str(dstOffset) + ']')
         return code
 
     def div_op(self, instr, scopeInfo, funcScope):
@@ -398,12 +429,21 @@ class CodeGenerator:
             if isinstance(scopeInfo[2], int):
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
                 srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
-                code.append('fld qword [ebp' + srcOffset + ']')
-                code.append('fstp qword [ebp' + dstOffset + ']')
+                code.append('fld dword [ebp' + srcOffset + ']')
+                code.append('fstp dword [ebp' + dstOffset + ']')
             else:
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
-                code.append('fld ' + str(src))
-                code.append('fstp qword [ebp' + dstOffset + ']')
+
+                binaryCode = binary(float(src))
+
+                # rand_str = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
+                # self.asmCode.insert(8, str(rand_str) + ': dq ' + str(src))
+                # self.dataIndex += 1
+                # code.append('fld dword [' + str(rand_str) + ']')
+                # # code.append('fld ' + str(src))
+                # code.append('fstp dword [ebp' + dstOffset + ']')
+                code.append('mov edi, 0b' + str(binaryCode))
+                code.append('mov [ebp' + dstOffset + '], edi')
         else:
             if isinstance(scopeInfo[2], int):
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
@@ -529,7 +569,7 @@ class CodeGenerator:
         #     code.append('mov edi, [ebp'+ srcOffset +']')
         # else:
         code.append('lea edi, [ebp'+ srcOffset +']')
-        
+
         # if flag[2] == 1:
         #     code.append('mov esi, [ebp' + dstOffset + ']')
         #     code.append('mov [esi], edi')
@@ -594,10 +634,13 @@ class CodeGenerator:
     def print_float(self, instr, scopeInfo, funcScope):
         src = instr[1]
         srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
+        flag = self.setFlags(instr, scopeInfo)
         code = []
         code.append('mov esi, [ebp' + srcOffset + ']')
+        if flag[1] == 1:
+            code.append('mov esi, [esi]')
         code.append('push esi')
-        code.append('push print_float')
+        code.append('push farray_print')
         code.append('call printf')
         code.append('pop esi')
         code.append('pop esi')
@@ -747,7 +790,7 @@ class CodeGenerator:
         dst = instr[1]
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         flag = self.setFlags(instr, scopeInfo)
-        
+
         code = []
         code.append('mov esi, [ebp' + dstOffset + ']')
         if flag[1] == 1:
