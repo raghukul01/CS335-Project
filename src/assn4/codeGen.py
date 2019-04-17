@@ -202,7 +202,6 @@ class CodeGenerator:
 
         code = []
         code.append('fld qword [ebp' + str(src1Offset) + ']')
-        print(scopeInfo)
         if isinstance(scopeInfo[3], int):
             code.append('fld qword [ebp' + str(src2Offset) + ']')
         else:
@@ -256,7 +255,6 @@ class CodeGenerator:
 
         code = []
         code.append('fld qword [ebp' + str(src1Offset) + ']')
-        print(scopeInfo)
         if isinstance(scopeInfo[3], int):
             code.append('fld qword [ebp' + str(src2Offset) + ']')
         else:
@@ -856,7 +854,6 @@ if __name__=='__main__':
     assert(len(rootNode.code) == len(rootNode.scopeInfo))
     helper = pkl.load(open('helper.p', 'rb'))
 
-    # print(rootNode.scopeInfo)
     # Now can use helper class functions
 
     codeGen = CodeGenerator(helper, rootNode)
