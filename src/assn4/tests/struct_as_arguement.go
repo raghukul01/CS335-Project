@@ -3,7 +3,7 @@
 package main;
 
 type person struct {
-	name string;
+	name int;
 	age  int;
 };
 
@@ -16,7 +16,7 @@ func person_check(a type person) int {
 
 func main(){
 	var p type person;
-	p.name = "Rajesh";
-	p.age = -1;
+	p.name = 10;
+	p.age = 100;
 	print person_check(p);
 };
