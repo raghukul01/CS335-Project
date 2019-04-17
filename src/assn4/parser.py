@@ -264,6 +264,7 @@ def p_param_decl(p):
 # -----------------------BLOCKS---------------------------
 def p_block(p):
     '''Block : LBRACE StatementList RBRACE'''
+    
     p[0] = p[2]
     p[0].name = 'Block'
 
@@ -566,12 +567,23 @@ def p_short_var_decl(p):
 # ----------------FUNCTION DECLARATIONS------------------
 def p_func_decl(p):
     '''FunctionDecl : FUNC FunctionName CreateScope Function EndScope '''
+
     p[0] = p[4]
     p[0].name = 'FunctionDecl'
     funcScope = helper.symbolTables[0].functions[p[2].extra['name']][-1]
-    p[0].code.insert(0,[p[2].extra['name']+str(funcScope)+'::'])
-    p[0].scopeInfo.insert(0,[''])
-    helper.symbolTables[0].functions[p[2].extra['name']+str(funcScope)] = funcScope
+    if 'is_empty' not in p[4].extra:
+        if p[2].extra['name'] in helper.symbolTables[0].maybe:
+            newfuncScope = helper.symbolTables[0].maybeScope[p[2].extra['name']]
+            p[0].code.insert(0,[p[2].extra['name']+str(newfuncScope)+'::'])  
+            p[0].scopeInfo.insert(0,[''])
+            helper.symbolTables[0].functions[p[2].extra['name']+str(newfuncScope)] = funcScope
+        else:  
+            p[0].code.insert(0,[p[2].extra['name']+str(funcScope)+'::'])
+            p[0].scopeInfo.insert(0,[''])
+            helper.symbolTables[0].functions[p[2].extra['name']+str(funcScope)] = funcScope
+    else:
+        helper.symbolTables[0].maybe.append(p[2].extra['name'])
+        helper.symbolTables[0].maybeScope[p[2].extra['name']] = funcScope
 
 def p_func_name(p):
     '''FunctionName : IDENT'''
@@ -585,8 +597,11 @@ def p_func(p):
     p[0].name = 'Function'
 
 def p_func_body(p):
-    '''FunctionBody : Block'''
+    '''FunctionBody : Block
+                    | epsilon'''
     p[0] = p[1]
+    if p[1].name == 'epsilon':
+        p[0].extra['is_empty'] = True
     p[0].name = 'FunctionBody'
 
 def p_create_scope(p):
