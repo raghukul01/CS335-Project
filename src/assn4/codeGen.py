@@ -317,7 +317,7 @@ class CodeGenerator:
         code.append('xor edx, edx')
         code.append('mov eax, [ebp' + str(src1Offset) + ']')
         if isinstance(scopeInfo[3], int):
-            code.append('mov ebi, [ebp' + str(src2Offset) + ']')
+            code.append('mov ebx, [ebp' + str(src2Offset) + ']')
         else:
             code.append('mov ebx, ' + str(src2))
         code.append('idiv ebx')
@@ -506,7 +506,6 @@ class CodeGenerator:
         dst = instr[1]
         src = instr[2]
         flag = self.setFlags(instr, scopeInfo)
-        print(flag, instr)
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)

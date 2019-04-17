@@ -707,7 +707,6 @@ def p_prim_expr(p):
         p[0] = p[1]
         if True:
             baseType = helper.getBaseType(p[1].typeList[0])
-            print(baseType)
             ident = p[2].extra['ident']
             if isinstance(baseType[1], str):
                 baseType[1] = helper.getBaseType(baseType[1])[1]
@@ -823,7 +822,6 @@ def p_expr(p):
         p[0].placeList = p[1].placeList
         p[0].code = p[1].code
         p[0].scopeInfo = p[1].scopeInfo
-        print(p[1].extra)
         p[0].extra['deref'] = p[1].extra['deref']
         p[0].extra['scope'] = helper.getScope()
     else:
