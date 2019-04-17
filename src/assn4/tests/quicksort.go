@@ -1,55 +1,88 @@
 // QuickSort
 package main;
 
-func partition (arr []int, low int, high int) int{
-	var pivot int = arr[high];
-	var i int = (low - 1);
+func partition (arr [100]int, l int, h int) [100]int{
+	x := arr[h];
+	i := l-1;
 
-	for j := low; j <= high- 1; j++{
-		if arr[j] <= pivot{
+	for j=l;j<=h-1;j++{
+		if arr[j] <= x{
 			i++;
-            tmp := arr[i];
-            arr[i] = arr[j];
-            arr[j] = tmp;
+			tmp := arr[i];
+			arr[i] = arr[j];
+			arr[j] = tmp;
 		};
 	};
-    tmp2 := arr[i+1];
-    arr[i+1] = arr[high];
-    arr[high] = tmp2;
-    return (i + 1);
+	tmp := arr[i+1];
+	arr[i+1] = arr[h];
+	arr[h] = tmp;
+	return (i+1);
 };
 
-func quickSort(arr []int, low int, high int){
-	if low < high{
-		var pi int;
-        pi = partition(low, high);
+func quickSort(arr [100]int, l int, h int) [100]int{
+	var stack [100]int;
+	capacity := h-l+1;
+	top := -1;
 
-		quickSort(low, pi - 1);
-		quickSort(pi + 1, high);
+	top++;
+	stack[top] = l;
+	top++;
+	stack[top] = h;
+
+	for ;;{
+		h = stack[top];
+		top--;
+		l = stack[top];
+		top--;
+
+		// Partition starts
+		x := arr[h];
+		i := l-1;
+
+		for j=l;j<=h-1;j++{
+			if arr[j] <= x{
+				i++;
+				tmp := arr[i];
+				arr[i] = arr[j];
+				arr[j] = tmp;
+			};
+		};
+		tmp := arr[i+1];
+		arr[i+1] = arr[h];
+		arr[h] = tmp;
+		// Partition ends
+
+		p := i+1;
+		if (p-1) < l {
+			top++;
+			stack[top] = l;
+			top++;
+			stack[top] = p-1;
+		};
+
+		if (p+1)<h{
+			top++;
+			stack[top] = p+1;
+			top++;
+			stack[top] = h;
+		};
 	};
+	return arr;
 };
 
 func main()
 {
+	var n int;
+	var arr [100]int;
+	scan n;
 
-	var arr [6]int;
-	// {1, 74, 37, 19, 6};
-
-    // arr[0] = 1;
-    // arr[1] = 74;
-    // arr[2] = 37;
-    // arr[3] = 19;
-    // arr[4] = 6;
-    // arr[5] = 23;
-
-    for i:=0; i<6; i++{
+    for i:=0; i<n; i++{
         scan arr[i];
     };
 
-	var n int = 6;
-	quickSort(arr, 0, n-1);
+	arr = quickSort(arr, 0, n-1);
 
-	for i:=0; i<6; i++{
+	for i:=0; i<n; i++{
         print arr[i];
     };
 };
