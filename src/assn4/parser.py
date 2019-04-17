@@ -739,7 +739,8 @@ def p_prim_expr(p):
             compilation_errors.add('Invalid Operation', line_number.get()+1, 'type ' + str(helper.getBaseType(p[1].typeList[0])) + ' does not support indexing')
         else:
             arrayElemtp = helper.addUnNamedType(rawType[1]['type'])
-            newVar1 = helper.newVar(arrayElemtp)
+            newVar1 = helper.newVar('int')
+            helper.symbolTables[helper.getScope()].update(newVar1, 'type', arrayElemtp)
             newVar2 = helper.newVar('int')
             arrayElemSz = helper.type[arrayElemtp]['size']
             p[0].code.append(['*' + 'int', newVar2, p[2].placeList[0], arrayElemSz])

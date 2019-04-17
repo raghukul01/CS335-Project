@@ -141,13 +141,24 @@ class CodeGenerator:
             objOffset = self.ebpOffset(src1, scopeInfo[2], funcScope)
             dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
             src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
-            return ['mov edx, '+str(objOffset),
-                    'mov esi, [ebp'+str(src2Offset)+']',
-                    'add edx, esi',
-                    'mov esi, ebp',
-                    'add esi, edx',
-                    'mov [ebp' + str(dstOffset) + '], esi',
-                ]
+            code_ = []
+            if flag[2] == 1:
+                code_.append('mov edx, [ebp'+str(objOffset)+']')
+                # dont add ebp
+            else:
+                code_.append('mov edx, '+str(objOffset))
+            code_.append('mov esi, [ebp'+str(src2Offset)+']')
+            if flag[3] == 1:
+                code_.append('mov esi, [esi]')
+            code_.append('add edx, esi')
+
+            if flag[2] == 1:
+                code_.append('mov esi, 0')
+            else:
+                code_.append('mov esi, ebp')
+            code_.append('add esi, edx')
+            code_.append('mov [ebp' + str(dstOffset) + '], esi')
+            return code_
 
         dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
         src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)

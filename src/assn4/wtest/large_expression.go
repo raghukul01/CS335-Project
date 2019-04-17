@@ -1,5 +1,7 @@
 package main;
 
+// Output: 27 331
+
 func main(){
     var a int;
 

@@ -1,5 +1,7 @@
 package main;
 
+// output: 1 50 335 285 2470
+
 func sum(a int) int{
     return a;
 };
