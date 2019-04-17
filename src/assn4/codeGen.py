@@ -216,7 +216,6 @@ class CodeGenerator:
 
         code = []
         code.append('fld qword [ebp' + str(src1Offset) + ']')
-        print(scopeInfo)
         if isinstance(scopeInfo[3], int):
             code.append('fld qword [ebp' + str(src2Offset) + ']')
         else:
@@ -270,7 +269,6 @@ class CodeGenerator:
 
         code = []
         code.append('fld qword [ebp' + str(src1Offset) + ']')
-        print(scopeInfo)
         if isinstance(scopeInfo[3], int):
             code.append('fld qword [ebp' + str(src2Offset) + ']')
         else:
@@ -480,31 +478,31 @@ class CodeGenerator:
         sz = helper.symbolTables[scopeInfo[1]].get(instr[1])['size']
         dst = instr[1]
         src = instr[2]
-        code = []
         flag = self.setFlags(instr, scopeInfo)
 
-        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
-        srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
+        offset1 = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
+        offset2 = self.ebpOffset(instr[2], scopeInfo[2], funcScope)
 
-        ctr1 = 0
-        ctr2 = 0
-        while ctr2 < sz:
-            var1 = ctr1 + int(dstOffset)
-            if var1 >= 0:
-                var1 = '+' + str(var1)
-            code.append('mov esi, [ebp' + srcOffset + ']')
-            if flag[2] == 1:
-                code.append('mov esi, [esi]')
-            code.append('sub esi,' + str(ctr2))
-            code.append('mov edi, [esi]')
-            if flag[1] == 1:
-                code.append('mov esi, [ebp' + str(var1) +']')
-                code.append('mov [esi], edi')
-            else:
-                code.append('mov [ebp' + str(var1) +'], edi')
-            ctr1 += 4
-            ctr2 += 4
-        return code
+        self.counter += 1
+        label = 'looping' + str(self.counter)
+        iters = int(sz / 4)
+        code_ = ['mov esi, ebp', 'mov ebx, ebp']
+        code_.append('add esi, '+offset1)
+        code_.append('add ebx, [ebp' + offset2 + ']')
+        if flag[2] == 1:
+            code_.append('mov ebx, [ebp' + offset2 + ']')
+            code_.append('mov ebx, [ebx]')
+        if flag[1] == 1:
+            code_.append('mov esi, [ebp' + offset1 + ']')
+        code_.append('mov cx, '+str(iters))
+        code_.append(label + ':')
+        code_.append('mov edx, [ebx]')
+        code_.append('mov [esi], edx')
+        code_.append('add esi, 4')
+        code_.append('add ebx, 4')
+        code_.append('dec cx')
+        code_.append('jnz '+label)
+        return code_
 
 
     def add_assign_op(self, instr, scopeInfo, funcScope):
@@ -544,16 +542,16 @@ class CodeGenerator:
         srcOffset = self.ebpOffset(src, scopeInfo[2], funcScope)
         code = []
 
-        # if flag[2] == 1:
-        #     code.append('mov edi, [ebp'+ srcOffset +']')
-        # else:
-        code.append('lea edi, [ebp'+ srcOffset +']')
+        if flag[2] == 1:
+            code.append('mov edi, [ebp'+ srcOffset +']')
+        else:
+            code.append('lea edi, [ebp'+ srcOffset +']')
         
-        # if flag[2] == 1:
-        #     code.append('mov esi, [ebp' + dstOffset + ']')
-        #     code.append('mov [esi], edi')
-        # else:
-        code.append('mov [ebp'+dstOffset+'], edi')
+        if flag[1] == 1:
+            code.append('mov esi, [ebp' + dstOffset + ']')
+            code.append('mov [esi], edi')
+        else:
+            code.append('mov [ebp'+dstOffset+'], edi')
         return code
 
     def relops_cmp(self, instr, scopeInfo, funcScope):
