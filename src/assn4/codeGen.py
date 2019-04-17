@@ -20,8 +20,9 @@ class CodeGenerator:
         self.asmCode.append('extern puts')
         # self.asmCode.append('extern farray_print')
         self.asmCode.append('section .data')
+        self.asmCode.append('temp dq 0')
         self.asmCode.append('print_int db "%i ", 0x00')
-        self.asmCode.append('farray_print dq "%x ", 0x00')
+        self.asmCode.append('farray_print db "%f ", 0x0a, 0x00')
         self.asmCode.append('print_line db "", 0x0a, 0x00')
         self.asmCode.append('scan_int db "%d", 0')
         self.dataIndex = 8
@@ -32,6 +33,7 @@ class CodeGenerator:
         self.scopeInfo = rootNode.scopeInfo
         self.code = rootNode.code
         self.relops = ['==int', '!=int', '<=int', '>=int', '>int', '<int']
+        self.frelops = ['==float', '!=float', '<=float', '>=float', '>float', '<float']
 
     def ebpOffset(self, ident, identScope, funcScope):
         paramSize = helper.getParamWidth(funcScope)
@@ -118,6 +120,34 @@ class CodeGenerator:
             code.append('mov [esi], edi')
         else:
             code.append('mov [ebp' + str(dstOffset) + '], esi')
+        return code
+
+    def unary_fminus(self, instr, scopeInfo, funcScope):
+        dst = instr[1]
+        src1 = instr[2]
+        flag = self.setFlags(instr, scopeInfo)
+
+        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+        src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
+
+        binaryCode = binary(float(0.0))
+
+        code = []
+        code.append('mov edi, 0b' + str(binaryCode))
+        code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+        code.append('fld dword [ebp' + str(dstOffset) + ']')
+        # if flag[2] == 1:
+        #     code.append('mov edi, [edi]')
+        # code.append('mov esi, 0')
+        # code.append('sub esi, edi')
+        code.append('fsub dword [ebp+' + str(src1Offset) + ']')
+        # if flag[1] == 1:
+        #     code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+        #     code.append('mov [esi], edi')
+        # else:
+        #     code.append('mov [ebp' + str(dstOffset) + '], esi')
+        code.append('fstp dword [ebp' + str(dstOffset) + ']')
         return code
 
     def setFlags(self, instr, scopeInfo):
@@ -259,7 +289,7 @@ class CodeGenerator:
         return code
 
     def fsub_op(self, instr, scopeInfo, funcScope):
-
+        print(instr)
         dst = instr[1]
         src1 = instr[2]
         src2 = instr[3]
@@ -372,6 +402,34 @@ class CodeGenerator:
             code.append('mov [esi], eax')
         else:
             code.append('mov [ebp' + str(dstOffset) + '], eax')
+        return code
+
+    def fdiv_op(self, instr, scopeInfo, funcScope):
+        dst = instr[1]
+        src1 = instr[2]
+        src2 = instr[3]
+
+        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+        src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
+        if isinstance(scopeInfo[3], int):
+            src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
+
+        code = []
+        code.append('fld dword [ebp' + str(src1Offset) + ']')
+        if isinstance(scopeInfo[3], int):
+            code.append('fdiv dword [ebp' + str(src2Offset) + ']')
+        else:
+            binaryCode = binary(float(src2))
+
+            code.append('mov edi, 0b' + str(binaryCode))
+            code.append('mov [ebp' + str(dstOffset) + '], edi')
+
+            # rand_str = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
+            # self.asmCode.insert(8, str(rand_str) + ': dq ' + str(src2))
+            # self.dataIndex += 1
+            code.append('fdiv dword [ebp' + str(dstOffset) + ']')
+        # code.append('fmulp st1, st0')
+        code.append('fstp dword [ebp' + str(dstOffset) + ']')
         return code
 
     def pointer_assign(self, instr, scopeInfo, funcScope):
@@ -616,6 +674,48 @@ class CodeGenerator:
             code.append('mov [ebp' + str(dstOffset) + '], eax')
         return code
 
+    def relops_fcmp(self, instr, scopeInfo, funcScope):
+        dst = instr[1]
+        src1 = instr[2]
+        src2 = instr[3]
+        flag = self.setFlags(instr, scopeInfo)
+
+        dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
+        src1Offset = self.ebpOffset(src1, scopeInfo[2], funcScope)
+        src2Offset = self.ebpOffset(src2, scopeInfo[3], funcScope)
+
+        code = []
+        code.append('fld dword [ebp' + str(src1Offset) + ']')
+        # if flag[2] == 1:
+        #     code.append('mov edi, [edi]')
+        code.append('fld dword [ebp' + str(src2Offset) + ']')
+        # if flag[3] == 1:
+        #     code.append('mov esi, [esi]')
+        code.append('xor eax, eax')
+        code.append('fcomip')
+        # code.append('sahf')
+        code.append('fstp dword [temp]')
+        # code.append('mov al, c0')
+        if instr[0] == '==float':
+            code.append('sete al')
+        elif instr[0] == '!=float':
+            code.append('setne al')
+        elif instr[0] == '<float':
+            code.append('setl al')
+        elif instr[0] == '>float':
+            code.append('setg al')
+        elif instr[0] == '<=float':
+            code.append('setle al')
+        elif instr[0] == '>=float':
+            code.append('setge al')
+
+        if flag[1] == 1:
+            code.append('mov esi, [ebp'+ str(dstOffset) + ']')
+            code.append('mov [esi], eax')
+        else:
+            code.append('mov [ebp' + str(dstOffset) + '], eax')
+        return code
+
     def print_int(self, instr, scopeInfo, funcScope):
         src = instr[1]
         srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
@@ -636,14 +736,23 @@ class CodeGenerator:
         srcOffset = self.ebpOffset(src, scopeInfo[1], funcScope)
         flag = self.setFlags(instr, scopeInfo)
         code = []
-        code.append('mov esi, [ebp' + srcOffset + ']')
-        if flag[1] == 1:
-            code.append('mov esi, [esi]')
-        code.append('push esi')
-        code.append('push farray_print')
+        # code.append('mov esi, [ebp' + srcOffset + ']')
+        # if flag[1] == 1:
+        #     code.append('mov esi, [esi]')
+        # code.append('push esi')
+        # code.append('push farray_print')
+        # code.append('call printf')
+        # code.append('pop esi')
+        # code.append('pop esi')
+
+        code.append('fld dword [ebp' + srcOffset + ']')
+        code.append('fstp qword [temp]')
+        code.append('push dword [temp+4]')
+        code.append('push dword [temp+4]')
+        code.append('push dword farray_print')
         code.append('call printf')
-        code.append('pop esi')
-        code.append('pop esi')
+        code.append('add esp, 12')
+
         return code
 
     def print_string(self, instr, scopeInfo, funcScope):
@@ -821,7 +930,10 @@ class CodeGenerator:
         elif instr[0] == '+float':
             return self.fadd_op(instr, scopeInfo, funcScope)
         elif instr[0] == '-float':
-            return self.fsub_op(instr, scopeInfo, funcScope)
+            if len(instr) == 4:
+                return self.fsub_op(instr, scopeInfo, funcScope)
+            else:
+                return self.unary_fminus(instr, scopeInfo, funcScope)
         if instr[0] == '-int':
             if len(instr) == 4:
                 return self.sub_op(instr, scopeInfo, funcScope)
@@ -833,7 +945,8 @@ class CodeGenerator:
             return self.fmul_op(instr, scopeInfo, funcScope)
         if instr[0] == '/int':
             return self.div_op(instr, scopeInfo, funcScope)
-
+        if instr[0] == '/float':
+            return self.fdiv_op(instr, scopeInfo, funcScope)
 
         if instr[0] == '=':
             return self.assign_op(instr, scopeInfo, funcScope)
@@ -851,6 +964,9 @@ class CodeGenerator:
 
         if instr[0] in self.relops:
             return self.relops_cmp(instr, scopeInfo, funcScope)
+
+        if instr[0] in self.frelops:
+            return self.relops_fcmp(instr, scopeInfo, funcScope)
 
         if instr[0] == 'if':
             return self.if_op(instr, scopeInfo, funcScope)

@@ -1,15 +1,38 @@
 package main;
 
-func Ackermann(m int, n int) int {
-    if m == 0 {
-        return n+1;
-    };
-    if (m > 0) && (n == 0) {
-        return Ackermann(m-1, 1);
-    };
-    return Ackermann(m-1, Ackermann(m, n-1));
+func foo(x float) float{
+	return (((x*x*x) - (x*x)) + (3.0));
+};
+
+func derivFunc(x float) float{
+	return (((3.0)*x*x) - ((2.0)*x));
+};
+
+func abs(x float) float{
+	if x < (0.0) {
+		return (-x);
+	}
+	else{
+		return x;
+	};
+};
+
+func NR(x float) float{
+	h := (foo(x) / derivFunc(x));
+    for i:=0;i<50;i++ {
+		h = (foo(x)/ derivFunc(x));
+        // print abs(h);
+        x = x - h;
+	};
+	return x;
 };
 
 func main(){
-    print Ackermann(3, 2);
+	var x0 float;
+	// scan x0;
+    x0 = 2.0;
+    y0 := 3.0;
+	ans := NR(x0);
+	print ans;
+	// return;
 };
