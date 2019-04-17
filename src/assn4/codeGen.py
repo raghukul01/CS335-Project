@@ -40,7 +40,7 @@ class CodeGenerator:
             if 'parent' in self.helper.symbolTables[identScope].table[ident]:
                 # parent = self.helper.symbolTables[identScope].table[ident]['parent']
                 # parentScope = self.helper.symbolTables[identScope].table[ident]['parentScope']
-                offset = -(self.helper.symbolTables[identScope].table[ident]['offset']  - paramSize)
+                offset = self.helper.symbolTables[identScope].table[ident]['offset']
             else:
                 offset = -(self.helper.symbolTables[identScope].table[ident]['offset'] + self.helper.symbolTables[identScope].table[ident]['size'] - paramSize)
         if offset >= 0:
@@ -136,7 +136,7 @@ class CodeGenerator:
         # TODO add the flag logic here as well
         if baseType[0] == 'struct':
             objOffset = int(self.ebpOffset(src1, scopeInfo[2], funcScope))
-            self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = -(objOffset + int(src2))
+            self.helper.symbolTables[scopeInfo[1]].table[dst]['offset'] = objOffset + int(src2)
             self.helper.symbolTables[scopeInfo[1]].table[dst]['parent'] = src1
             # self.helper.symbolTables[scopeInfo[1]].table[dst]['parentScope'] = scopeInfo[2]
             return ['none']
@@ -393,7 +393,6 @@ class CodeGenerator:
             code_.append('dec cx')
             code_.append('jnz '+label)
             return code_
-
         if data_['type'] == 'float':
             if isinstance(scopeInfo[2], int):
                 dstOffset = self.ebpOffset(dst, scopeInfo[1], funcScope)
@@ -725,7 +724,6 @@ class CodeGenerator:
 
     def getRetVal(self, instr, scopeInfo, funcScope):
         data_ = helper.symbolTables[scopeInfo[1]].get(instr[1])
-        baseType = helper.getBaseType(data_['type'])
         offset = self.ebpOffset(instr[1], scopeInfo[1], funcScope)
 
         self.counter += 1
