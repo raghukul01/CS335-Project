@@ -4,18 +4,19 @@ func bin_search(arr [100]int, len int, key int) int{
 	first := 0;
 	last := len - 1;
 
-	for first<=last{
-		middle := (first+last)/2;
+	for ;first<=last;{
+		middle := first+(last - first)/2;
 		if arr[middle] == key{
-			return middle;
+			return middle+1;
 		};
 		if arr[middle] < key{
 			first = middle + 1;
 		}
 		else{
-			last := middle-1;
+			last = middle-1;
 		};
 	};
+	return -1;
 };
 
 func main(){
