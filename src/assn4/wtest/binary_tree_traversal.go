@@ -36,7 +36,6 @@ func main(){
     for i := 0;i < n;i++ {
         tree[i].val = i;
         tree[i].isLeaf = 0;
-        print tree[i].val;
     };
 
 
@@ -59,9 +58,8 @@ func main(){
     tree[3].left = &tree[7];
     tree[3].right = &tree[8];
 
-    tree[6].right = &tree[9];
-    tree[6].left = &tree[10];
-    tree[0].val = 100;
+    tree[6].left = &tree[9];
+    tree[6].right = &tree[10];
     
     root := tree[0];
 
